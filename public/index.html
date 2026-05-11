@@ -1,1 +1,2430 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Almanacco Storico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  :root {
+    --ink: #007f93;
+    --ink2: #006f95;
+    --ink3: #009acdb8;
+    --parchment: #c8f3fdf0;
+    --parchment2: #baebf8;
+    --parchment3: #81e2ff;
+    --gold: #005f81;
+    --gold2: #006196;
+    --gold3: rgb(2, 68, 143);
+    --red: #007c81;
+    --red2: #006e99;
+    --teal: #1a5f5f;
+    --teal2: #2e8b8b;
+    --line: rgba(17, 73, 92, 0.352);
+    --shadow: rgba(5, 18, 30, 0.12);
+  }
+
+  body {
+    font-family: 'Crimson Pro', Georgia, serif;
+    background: var(--parchment);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* Paper texture via CSS */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 27px,
+        rgba(90,60,20,0.00) 27px,
+        rgba(90,60,20,0.00) 28px
+      );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 0 1.5rem 4rem;
+  }
+
+  /* ── MASTHEAD ── */
+  .masthead {
+    text-align: center;
+    padding: 2.5rem 1rem 1.5rem;
+    border-bottom: 3px double rgba(90,60,20,0.35);
+    margin-bottom: 1.5rem;
+  }
+  .masthead-vol {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 0.5rem;
+  }
+  .masthead-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(2.2rem, 6vw, 3.8rem);
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .masthead-subtitle {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-style: italic;
+    font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+    color: var(--ink3);
+    margin-top: 0.35rem;
+  }
+  .masthead-rule {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1rem 0 0.5rem;
+    color: var(--gold);
+    font-size: 1rem;
+  }
+  .masthead-rule::before,
+  .masthead-rule::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold), transparent);
+  }
+
+  /* ── DATE DISPLAY ── */
+  .date-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    background: var(--ink);
+    color: var(--parchment);
+    padding: 0.6rem 1.25rem;
+    border-radius: 2px;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 1.8rem;
+  }
+  .date-bar .day-full {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.05rem;
+  }
+  .date-bar .clock {
+    font-family: 'Crimson Pro', serif;
+    color: var(--gold3);
+    font-size: 1.1rem;
+  }
+
+  /* ── NAV TABS ── */
+  .nav {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--parchment3);
+    margin-bottom: 2rem;
+  }
+  .nav-btn {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
+    padding: 0.6rem 1.4rem;
+    border: none;
+    background: transparent;
+    color: var(--ink3);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+  }
+  .nav-btn:hover { color: var(--ink); }
+  .nav-btn.active {
+    color: var(--red);
+    border-bottom-color: var(--red);
+    font-weight: 700;
+  }
+
+  /* ── PANELS ── */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .section-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .section-header .date-label {
+    font-style: italic;
+    color: var(--gold);
+    font-size: 1.1rem;
+  }
+
+  /* ── EVENT CARD ── */
+  .event-list { display: flex; flex-direction: column; gap: 0; }
+  .event-card {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 1.1rem 0;
+    transition: background 0.15s;
+  }
+  .event-card:hover { background: rgba(184,134,11,0.04); }
+  .event-year {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+    padding-top: 2px;
+  }
+  .event-year .era {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    color: var(--ink3);
+    margin-top: 2px;
+    font-family: 'Crimson Pro', serif;
+    font-style: normal;
+  }
+  .event-desc {
+    font-size: 1.05rem;
+    line-height: 1.55;
+    color: var(--ink2);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--ink3);
+    font-style: italic;
+    font-size: 1.1rem;
+    border: 1px dashed var(--parchment3);
+    border-radius: 4px;
+  }
+
+  /* ── SEARCH PANEL ── */
+  .search-form {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+    padding: 1.25rem;
+    background: var(--parchment2);
+    border: 1px solid var(--parchment3);
+    border-radius: 3px;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .form-group label {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink3);
+  }
+  .form-group select, .form-group input[type=number] {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem;
+    padding: 0.4rem 0.65rem;
+    border: 1px solid var(--parchment3);
+    background: var(--parchment);
+    color: var(--ink);
+    border-radius: 2px;
+    min-width: 100px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group select:focus, .form-group input:focus {
+    border-color: var(--gold);
+  }
+  .search-btn {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    padding: 0.5rem 1.4rem;
+    background: var(--ink);
+    color: var(--parchment);
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background 0.2s;
+    align-self: flex-end;
+  }
+  .search-btn:hover { background: var(--red); }
+
+  /* ── QUIZ PANEL ── */
+  .quiz-card {
+    background: var(--parchment2);
+    border: 1px solid var(--parchment3);
+    border-radius: 4px;
+    padding: 1.75rem 2rem;
+    position: relative;
+  }
+  .quiz-date-badge {
+    display: inline-block;
+    background: var(--parchment2);
+    color: var(--gold3);
+    font-family: 'Playfair Display', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    padding: 0.25rem 0.85rem;
+    border-radius: 2px;
+    margin-bottom: 1.25rem;
+  }
+  .quiz-question {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    color: var(--ink);
+    margin-bottom: 1.5rem;
+    font-style: italic;
+  }
+  .quiz-hint {
+    font-size: 0.85rem;
+    color: var(--ink);
+    margin-bottom: 1rem;
+  }
+  .quiz-input-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  .quiz-input {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    width: 140px;
+    padding: 0.4rem 0.75rem;
+    border: 2px solid var(--parchment3);
+    background: var(--parchment);
+    color: var(--ink);
+    border-radius: 2px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .quiz-input:focus { border-color: var(--gold); }
+  .submit-btn {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+    padding: 0.55rem 1.6rem;
+    background: var(--red);
+    color: var(--parchment);
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .submit-btn:hover { background: var(--red2); }
+  .submit-btn:active { transform: scale(0.97); }
+
+  /* quiz result */
+  .quiz-result {
+    display: none;
+    margin-top: 0.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+  }
+  .quiz-result.visible { display: block; }
+  .result-verdict {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    margin-bottom: 0.75rem;
+  }
+  .result-verdict.exact { color: var(--teal); }
+  .result-verdict.close { color: var(--gold); }
+  .result-verdict.far { color: var(--red); }
+  .result-correct {
+    font-size: 1rem;
+    color: var(--ink3);
+    margin-bottom: 1rem;
+  }
+  .score-bar-wrap {
+    margin-bottom: 1.25rem;
+  }
+  .score-label {
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 0.35rem;
+    display: flex;
+    justify-content: space-between;
+  }
+  .score-bar-bg {
+    height: 12px;
+    background: var(--parchment3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%;
+    background: linear-gradient(to right, var(--red2), var(--gold2));
+    border-radius: 2px;
+    transition: width 0.8s cubic-bezier(.22,.68,0,1.2);
+    width: 0%;
+  }
+  .new-quiz-btn {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    padding: 0.5rem 1.3rem;
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--ink3);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .new-quiz-btn:hover { background: var(--ink); color: var(--parchment); }
+
+  /* stats strip */
+  .stats-strip {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+    padding: 1rem 1.25rem;
+    background: var(--parchment2);
+    border: 1px solid var(--parchment3);
+    border-radius: 3px;
+  }
+  .stat-item { text-align: center; }
+  .stat-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--gold);
+    display: block;
+  }
+  .stat-lbl {
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+  }
+
+  /* footer ornament */
+  .footer-ornament {
+    text-align: center;
+    padding: 2rem 0 0;
+    color: var(--ink3);
+    font-size: 1.1rem;
+    letter-spacing: 0.5em;
+    opacity: 0.45;
+  }
+
+  /* ── MOBILE RESPONSIVENESS ── */
+  @media (max-width: 768px) {
+    .wrapper {
+      padding: 0 1rem 3rem;
+    }
+    
+    .masthead {
+      padding: 2rem 0.5rem 1rem;
+    }
+    
+    .nav {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .nav-btn {
+      padding: 0.5rem 0.9rem;
+      font-size: 0.85rem;
+      border-bottom-width: 2px;
+    }
+    
+    .search-form {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 1rem;
+    }
+    
+    .form-group {
+      width: 100%;
+    }
+    
+    .form-group select, 
+    .form-group input[type=number] {
+      width: 100%;
+    }
+    
+    .search-btn {
+      width: 100%;
+      padding: 0.7rem 1.4rem;
+    }
+    
+    .section-header {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .event-card {
+      grid-template-columns: 80px 1fr;
+      gap: 0.5rem;
+      padding: 1rem 0;
+    }
+    
+    .event-year {
+      font-size: 1.2rem;
+    }
+    
+    .event-desc {
+      font-size: 1rem;
+    }
+    
+    .quiz-input-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .quiz-input {
+      width: 100%;
+      font-size: 1.2rem;
+    }
+    
+    .submit-btn, .new-quiz-btn {
+      width: 100%;
+    }
+    
+    .stats-strip {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .modal-content {
+      max-height: 90vh;
+      margin: 0.5rem;
+    }
+    
+    .modal-header {
+      padding: 1rem;
+    }
+    
+    .modal-body {
+      padding: 1rem;
+    }
+  }
+  
+  @media (max-width: 500px) {
+    .masthead-vol {
+      font-size: 9px;
+    }
+    
+    .masthead-title {
+      font-size: clamp(1.8rem, 8vw, 2.5rem);
+    }
+    
+    .masthead-subtitle {
+      font-size: clamp(0.8rem, 3vw, 1rem);
+    }
+    
+    .date-bar {
+      flex-direction: column;
+      text-align: center;
+      padding: 0.5rem 1rem;
+    }
+    
+    .nav-btn {
+      flex: 1 1 45%;
+      text-align: center;
+      padding: 0.5rem 0.5rem;
+      font-size: 0.8rem;
+    }
+    
+    .event-card {
+      grid-template-columns: 60px 1fr;
+      gap: 0.3rem;
+    }
+    
+    .event-year {
+      font-size: 1rem;
+    }
+    
+    .event-year .era {
+      font-size: 0.55rem;
+    }
+    
+    .event-desc {
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+    
+    .quiz-card {
+      padding: 1rem 0.75rem;
+    }
+    
+    .quiz-question {
+      font-size: 1.1rem;
+    }
+    
+    .stat-val {
+      font-size: 1.3rem;
+    }
+    
+    .stat-lbl {
+      font-size: 0.65rem;
+    }
+    
+    .modal-title {
+      font-size: 1.2rem;
+    }
+    
+    .modal-close {
+      font-size: 1.5rem;
+      width: 28px;
+      height: 28px;
+    }
+  }
+  
+  /* Touch-friendly improvements */
+  @media (hover: none) and (pointer: coarse) {
+    .nav-btn, 
+    .search-btn, 
+    .submit-btn, 
+    .new-quiz-btn,
+    .event-card.clickable {
+      min-height: 44px;
+    }
+    
+    .form-group select, 
+    .form-group input[type=number],
+    .quiz-input {
+      min-height: 44px;
+    }
+  }
+
+  /* ── MODAL DEEP DIVE ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 72, 83, 0.75);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .modal-overlay.visible {
+    display: flex;
+    opacity: 1;
+  }
+  .modal-content {
+    background: var(--parchment);
+    max-width: 700px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    border-radius: 4px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    position: relative;
+    animation: modalSlideIn 0.3s ease-out;
+  }
+  @keyframes modalSlideIn {
+    from { transform: translateY(-30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 2px solid var(--parchment3);
+    background: var(--ink);
+    color: var(--parchment);
+  }
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+  }
+  .modal-close {
+    background: transparent;
+    border: none;
+    color: var(--parchment);
+    font-size: 1.8rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+  }
+  .modal-close:hover { color: var(--gold3); }
+  .modal-body {
+    padding: 1.5rem;
+  }
+  .modal-year-badge {
+    display: inline-block;
+    background: var(--gold);
+    color: var(--parchment);
+    font-family: 'Playfair Display', serif;
+    font-size: 0.9rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 2px;
+    margin-bottom: 1rem;
+  }
+  .modal-event-desc {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--ink2);
+    margin-bottom: 1.5rem;
+    font-style: italic;
+  }
+  .modal-section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+    border-bottom: 1px solid var(--parchment3);
+    padding-bottom: 0.4rem;
+    margin: 1.25rem 0 0.75rem;
+  }
+  .modal-wiki-summary {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+  .modal-wiki-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 3px;
+    margin: 1rem 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  .modal-wiki-source {
+    font-size: 0.85rem;
+    color: var(--ink3);
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--line);
+  }
+  .modal-wiki-source a {
+    color: var(--teal);
+    text-decoration: none;
+  }
+  .modal-wiki-source a:hover { text-decoration: underline; }
+  .modal-loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--ink3);
+    font-style: italic;
+  }
+  .event-card.clickable {
+    cursor: pointer;
+  }
+  .event-card.clickable:hover .event-desc {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--gold);
+    text-underline-offset: 3px;
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header class="masthead">
+    <div class="masthead-vol">Anno Domini · Edizione Storica</div>
+    <div class="masthead-title">Almanacco</div>
+    <div class="masthead-subtitle">Accadde Oggi — Memoria delle Epoche</div>
+    <div class="masthead-rule">✦</div>
+  </header>
+
+  <div class="date-bar">
+    <span class="day-full" id="today-label">—</span>
+    <span class="clock" id="clock-display">—</span>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showPanel('oggi')">Oggi nella Storia</button>
+    <button class="nav-btn" onclick="showPanel('cerca')">Ricerca Data</button>
+    <button class="nav-btn" onclick="showPanel('quiz')">Quiz Storico</button>
+    <button class="nav-btn" onclick="showPanel('profilo')">Profilo</button>
+  </nav>
+
+  <!-- OGGI -->
+  <section class="panel active" id="panel-oggi">
+    <div class="section-header">
+      <h2>Questo giorno</h2>
+      <span class="date-label" id="oggi-date-label">—</span>
+    </div>
+    <div class="event-list" id="event-list-oggi"></div>
+  </section>
+
+  <!-- CERCA -->
+  <section class="panel" id="panel-cerca">
+    <div class="search-form">
+      <div class="form-group">
+        <label>Giorno</label>
+        <input type="number" id="input-giorno" min="1" max="31" value="1" style="width:80px">
+      </div>
+      <div class="form-group">
+        <label>Mese</label>
+        <select id="input-mese">
+          <option value="1">Gennaio</option><option value="2">Febbraio</option>
+          <option value="3">Marzo</option><option value="4">Aprile</option>
+          <option value="5">Maggio</option><option value="6">Giugno</option>
+          <option value="7">Luglio</option><option value="8">Agosto</option>
+          <option value="9">Settembre</option><option value="10">Ottobre</option>
+          <option value="11">Novembre</option><option value="12">Dicembre</option>
+        </select>
+      </div>
+      <button class="search-btn" onclick="cercaData()">Cerca →</button>
+    </div>
+    <div class="section-header" id="cerca-header" style="display:none">
+      <h2>Risultati</h2>
+      <span class="date-label" id="cerca-date-label"></span>
+    </div>
+    <div class="event-list" id="event-list-cerca"></div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="panel" id="panel-quiz">
+    <div class="quiz-card" id="quiz-card">
+      <div class="quiz-date-badge" id="quiz-date-badge">— —</div>
+      <div class="quiz-question" id="quiz-question">Caricamento…</div>
+      <div class="quiz-hint" id="quiz-hint"></div>
+      <div class="quiz-input-row">
+        <input class="quiz-input" type="number" id="quiz-answer" placeholder="Anno" onkeydown="if(event.key==='Enter') submitQuiz()">
+        <button class="submit-btn" onclick="submitQuiz()">Risposta →</button>
+      </div>
+      <div class="quiz-result" id="quiz-result">
+        <div class="result-verdict" id="result-verdict"></div>
+        <div class="result-correct" id="result-correct"></div>
+        <div class="score-bar-wrap">
+          <div class="score-label">
+            <span>Punteggio</span>
+            <span id="score-num">0 / 5000</span>
+          </div>
+          <div class="score-bar-bg"><div class="score-bar-fill" id="score-bar"></div></div>
+        </div>
+        <button class="new-quiz-btn" onclick="newQuiz()">Nuovo Quiz ↺</button>
+      </div>
+    </div>
+
+    <div class="stats-strip" id="stats-strip">
+      <div class="stat-item">
+        <span class="stat-val" id="stat-partite">0</span>
+        <span class="stat-lbl">Partite</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-val" id="stat-score-tot">0</span>
+        <span class="stat-lbl">Punteggio totale</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-val" id="stat-media">—</span>
+        <span class="stat-lbl">Media punti</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-val" id="stat-best">—</span>
+        <span class="stat-lbl">Miglior partita</span>
+      </div>
+    </div>
+  </section>
+<!-- PROFILO -->
+<section class="panel" id="panel-profilo">
+  <div class="section-header">
+    <h2>Profilo Giocatore</h2>
+    <span class="date-label" id="profilo-name-label">—</span>
+  </div>
+
+  <div class="search-form" style="flex-direction:column; align-items:stretch;">
+    <div class="form-group">
+      <label>Nome giocatore</label>
+      <input type="text" id="input-nome" maxlength="40"
+             style="font-family:'Crimson Pro',serif; font-size:1rem; padding:0.4rem 0.65rem;
+                    border:1px solid var(--parchment3); background:var(--parchment);
+                    color:var(--ink); border-radius:2px; outline:none;">
+    </div>
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.5rem;">
+      <button class="search-btn" onclick="salvaNome()">Salva nome</button>
+      <button class="new-quiz-btn" onclick="esportaDati()">↓ Esporta JSON</button>
+      <button class="new-quiz-btn" onclick="document.getElementById('import-file').click()">↑ Importa JSON</button>
+      <button class="new-quiz-btn" onclick="resetDati()" style="border-color:var(--red); color:var(--red);">Reset</button>
+      <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importaDati(event)">
+    </div>
+  </div>
+
+  <div class="stats-strip">
+    <div class="stat-item">
+      <span class="stat-val" id="prof-partite">0</span>
+      <span class="stat-lbl">Partite giocate</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-val" id="prof-totale">0</span>
+      <span class="stat-lbl">Punti totali</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-val" id="prof-media">—</span>
+      <span class="stat-lbl">Media</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-val" id="prof-best">—</span>
+      <span class="stat-lbl">Miglior risultato</span>
+    </div>
+  </div>
+</section>
+  <div class="footer-ornament">— ✦ ✦ ✦ —</div>
+</div>
+
+<!-- MODAL DEEP DIVE -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-title">Approfondimento</h3>
+      <button class="modal-close" onclick="closeModalBtn()" aria-label="Chiudi">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <div class="modal-loading">Caricamento approfondimento...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MESI = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
+              'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const GIORNI_SETT = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+ 
+// ── DATABASE EVENTI (1000+ Eventi) ──
+const EVENTI = [
+{g:1,m:1,a:1959,d:"Rivoluzione Cubana: Fidel Castro prende il potere"},
+{g:1,m:1,a:1804,d:"Haiti proclama l'indipendenza dalla Francia"},
+{g:1,m:1,a:1863,d:"Entra in vigore il Proclama di Emancipazione di Lincoln"},
+{g:1,m:1,a:1901,d:"Viene istituito il Commonwealth d'Australia"},
+{g:1,m:1,a:1515,d:"Francesco I diventa re di Francia"},
+{g:2,m:1,a:1492,d:"I Re Cattolici conquistano Granada, fine della Reconquista"},
+{g:2,m:1,a:1839,d:"Louis Daguerre presenta il dagherrotipo all'Accademia delle Scienze"},
+{g:2,m:1,a:1920,d:"Prima retata contro i comunisti negli USA (Palmer Raids)"},
+{g:2,m:1,a:1788,d:"La Georgia ratifica la Costituzione USA"},
+{g:3,m:1,a:1521,d:"Papa Leone X scomunica Martin Lutero"},
+{g:3,m:1,a:1777,d:"George Washington sconfigge gli inglesi a Princeton"},
+{g:3,m:1,a:1868,d:"Inizio dell'era Meiji in Giappone"},
+{g:3,m:1,a:1959,d:"L'Alaska diventa il 49º stato USA"},
+{g:4,m:1,a:2010,d:"Inaugurazione del Burj Khalifa a Dubai"},
+{g:4,m:1,a:1642,d:"Inizia la Guerra Civile Inglese"},
+{g:4,m:1,a:1884,d:"Fondazione della Fabian Society a Londra"},
+{g:5,m:1,a:1919,d:"Nasce il Partito Nazista (DAP) in Germania"},
+{g:5,m:1,a:1762,d:"La Russia si allea con la Prussia (Guerra dei Sette Anni)"},
+{g:5,m:1,a:1933,d:"Inizia la costruzione del Golden Gate Bridge"},
+{g:5,m:1,a:1968,d:"Alexander Dubček inizia la Primavera di Praga"},
+{g:6,m:1,a:1412,d:"Nasce Giovanna d'Arco"},
+{g:6,m:1,a:1838,d:"Viene presentato il telegrafo di Samuel Morse"},
+{g:6,m:1,a:1066,d:"Aroldo II incoronato re d'Inghilterra"},
+{g:7,m:1,a:1610,d:"Galileo Galilei scopre i satelliti di Giove"},
+{g:7,m:1,a:1927,d:"Apre il primo servizio telefonico transatlantico"},
+{g:7,m:1,a:1989,d:"Imperatore Hirohito del Giappone muore"},
+{g:8,m:1,a:1297,d:"Francesco Grimaldi conquista la fortezza di Monaco"},
+{g:8,m:1,a:1912,d:"L'African National Congress viene fondato"},
+{g:8,m:1,a:1947,d:"David Ben-Gurion accetta il piano di spartizione della Palestina"},
+{g:9,m:1,a:2007,d:"Steve Jobs presenta il primo iPhone"},
+{g:9,m:1,a:1324,d:"Marco Polo muore a Venezia"},
+{g:9,m:1,a:1768,d:"Philip Astley apre il primo circo moderno a Londra"},
+{g:10,m:1,a:-49,d:"Giulio Cesare attraversa il Rubicone"},
+{g:10,m:1,a:1776,d:"Thomas Paine pubblica 'Common Sense'"},
+{g:10,m:1,a:1920,d:"Nasce la Società delle Nazioni"},
+{g:10,m:1,a:1863,d:"Inaugurata la metropolitana di Londra"},
+{g:11,m:1,a:1922,d:"Prima iniezione di insulina su un essere umano"},
+{g:11,m:1,a:1571,d:"Fondazione di Leopoldina (Brasile)"},
+{g:11,m:1,a:1787,d:"William Herschel scopre Titano e Oberon"},
+{g:12,m:1,a:1848,d:"Inizia la rivolta di Palermo contro i Borboni"},
+{g:12,m:1,a:1967,d:"Premiere del primo Super Bowl"},
+{g:12,m:1,a:1519,d:"Massimiliano I del Sacro Romano Impero muore"},
+{g:13,m:1,a:1898,d:"Émile Zola pubblica 'J'accuse' in difesa di Dreyfus"},
+{g:13,m:1,a:532,d:"Rivolta di Nika a Costantinopoli"},
+{g:13,m:1,a:1935,d:"Referendum della Saar: ritorno alla Germania"},
+{g:14,m:1,a:2005,d:"La sonda Huygens atterra su Titano"},
+{g:14,m:1,a:1858,d:"Attentato a Napoleone III da parte di Felice Orsini"},
+{g:14,m:1,a:1690,d:"Viene inventato il clarinetto"},
+{g:15,m:1,a:2001,d:"Nasce Wikipedia"},
+{g:15,m:1,a:1759,d:"Inaugurazione del British Museum"},
+{g:15,m:1,a:1929,d:"Nasce Martin Luther King Jr"},
+{g:16,m:1,a:1547,d:"Ivan il Terribile diventa zar di Russia"},
+{g:16,m:1,a:1909,d:"Spedizione Shackleton raggiunge il punto più vicino al Polo Sud"},
+{g:16,m:1,a:1979,d:"Lo Scià di Persia lascia l'Iran (Rivoluzione Islamica)"},
+{g:17,m:1,a:1991,d:"Inizia la Guerra del Golfo (Operazione Tempesta del Deserto)"},
+{g:17,m:1,a:1562,d:"Editto di Saint-Germain riconosce gli Ugonotti in Francia"},
+{g:17,m:1,a:1773,d:"Capitano Cook attraversa il Circolo Polare Antartico"},
+{g:18,m:1,a:1871,d:"Proclamazione del Regno di Germania a Versailles"},
+{g:18,m:1,a:1778,d:"James Cook scopre le Hawaii"},
+{g:18,m:1,a:1919,d:"Inizio della Conferenza di Pace di Parigi"},
+{g:19,m:1,a:1915,d:"Prima incursione aerea su Londra (Zeppelin tedeschi)"},
+{g:19,m:1,a:1853,d:"Premiere di 'Il Trovatore' di Verdi a Roma"},
+{g:19,m:1,a:1809,d:"Nasce Edgar Allan Poe"},
+{g:20,m:1,a:1936,d:"Muore re Giorgio V del Regno Unito"},
+{g:20,m:1,a:1981,d:"52 ostaggi americani liberati in Iran dopo 444 giorni"},
+{g:20,m:1,a:1841,d:"Hong Kong diventa colonia britannica"},
+{g:21,m:1,a:1793,d:"Luigi XVI viene ghigliottinato a Parigi"},
+{g:21,m:1,a:1976,d:"Primo volo commerciale del Concorde"},
+{g:21,m:1,a:1924,d:"Lenin muore"},
+{g:22,m:1,a:1901,d:"Muore la regina Vittoria del Regno Unito"},
+{g:22,m:1,a:1879,d:"Battaglia di Rorke's Drift (Guerra Zulu)"},
+{g:22,m:1,a:1905,d:"Domenica di sangue a San Pietroburgo"},
+{g:23,m:1,a:1556,d:"Terremoto di Shaanxi in Cina, il più mortale della storia"},
+{g:23,m:1,a:1960,d:"Bathyscaphe Trieste raggiunge la Fossa delle Marianne"},
+{g:23,m:1,a:1368,d:"Ribelli cinesi conquistano Pechino (fine dinastia Yuan)"},
+{g:24,m:1,a:1848,d:"James Marshall scopre l'oro in California (Gold Rush)"},
+{g:24,m:1,a:1965,d:"Winston Churchill muore a Londra"},
+{g:24,m:1,a:41,d:"Caligola assassinato dalla Guardia Pretoriana"},
+{g:25,m:1,a:1924,d:"Prima edizione dei Giochi Olimpici Invernali a Chamonix"},
+{g:25,m:1,a:1971,d:"Idi Amin prende il potere in Uganda con un colpo di stato"},
+{g:25,m:1,a:1533,d:"Enrico VIII sposa Anna Bolena"},
+{g:26,m:1,a:1788,d:"Prima flotta britannica arriva in Australia (Australia Day)"},
+{g:26,m:1,a:1905,d:"Scoperta del diamante Cullinan in Sudafrica"},
+{g:26,m:1,a:1841,d:"Hong Kong viene occupata dai britannici"},
+{g:27,m:1,a:1945,d:"L'Armata Rossa libera Auschwitz"},
+{g:27,m:1,a:1880,d:"Thomas Edison brevetta la lampadina elettrica"},
+{g:27,m:1,a:1967,d:"Disastro dell'Apollo 1: muoiono tre astronauti"},
+{g:28,m:1,a:1986,d:"Disastro dello Space Shuttle Challenger"},
+{g:28,m:1,a:1547,d:"Enrico VIII d'Inghilterra muore"},
+{g:28,m:1,a:1958,d:"Lego brevetta i mattoncini"},
+{g:29,m:1,a:1886,d:"Karl Benz brevetta la prima automobile"},
+{g:29,m:1,a:1676,d:"Fëdor III diventa zar di Russia"},
+{g:29,m:1,a:1845,d:"'Il Corvo' di Edgar Allan Poe viene pubblicato"},
+{g:30,m:1,a:1933,d:"Hitler diventa Cancelliere della Germania"},
+{g:30,m:1,a:1649,d:"Carlo I d'Inghilterra viene decapitato"},
+{g:30,m:1,a:1948,d:"Gandhi assassinato a Nuova Delhi"},
+{g:31,m:1,a:1606,d:"Guy Fawkes viene giustiziato per la Congiura delle Polveri"},
+{g:31,m:1,a:1958,d:"Lancio di Explorer 1, primo satellite USA"},
+{g:31,m:1,a:1865,d:"Il Congresso USA approva il 13° Emendamento (abolizione schiavitù)"},
+{g:1,m:2,a:2003,d:"Disastro dello Space Shuttle Columbia"},
+{g:1,m:2,a:1887,d:"Harvey Wilcox fonda Hollywood"},
+{g:1,m:2,a:1793,d:"La Francia dichiara guerra alla Gran Bretagna"},
+{g:2,m:2,a:1943,d:"Battaglia di Stalingrado: resa tedesca"},
+{g:2,m:2,a:1536,d:"Buenos Aires viene fondata per la prima volta"},
+{g:2,m:2,a:962,d:"Ottone I incoronato imperatore del Sacro Romano Impero"},
+{g:3,m:2,a:1468,d:"Johannes Gutenberg muore a Magonza"},
+{g:3,m:2,a:1959,d:"Buddy Holly, Ritchie Valens e Big Bopper muoiono in un incidente aereo"},
+{g:3,m:2,a:1870,d:"Il 15° Emendamento garantisce il voto agli afroamericani"},
+{g:4,m:2,a:1945,d:"Conferenza di Yalta tra Churchill, Roosevelt e Stalin"},
+{g:4,m:2,a:1789,d:"George Washington eletto primo presidente USA"},
+{g:4,m:2,a:1922,d:"Discovery della tomba di Tutankhamon"},
+{g:5,m:2,a:1818,d:"Nasce Karl Marx a Treviri"},
+{g:5,m:2,a:1631,d:"Roger Williams arriva in America"},
+{g:5,m:2,a:1885,d:"Leopoldo II del Belgio stabilisce lo Stato Libero del Congo"},
+{g:6,m:2,a:1952,d:"Elisabetta II diventa Regina del Regno Unito"},
+{g:6,m:2,a:1778,d:"Francia riconosce l'indipendenza americana"},
+{g:6,m:2,a:1819,d:"Singapore viene fondata da Stamford Raffles"},
+{g:7,m:2,a:1992,d:"Trattato di Maastricht: nasce l'Unione Europea"},
+{g:7,m:2,a:1904,d:"Grande incendio di Baltimora"},
+{g:7,m:2,a:1812,d:"Nasce Charles Dickens"},
+{g:8,m:2,a:1587,d:"Maria Stuarda viene decapitata per ordine di Elisabetta I"},
+{g:8,m:2,a:1910,d:"Viene fondata la Boy Scouts of America"},
+{g:8,m:2,a:1725,d:"Pietro il Grande muore"},
+{g:9,m:2,a:1849,d:"Proclamazione della Repubblica Romana (Mazzini, Garibaldi)"},
+{g:9,m:2,a:1895,d:"William G. Morgan inventa la pallavolo"},
+{g:9,m:2,a:1964,d:"I Beatles appaiono all'Ed Sullivan Show"},
+{g:10,m:2,a:1840,d:"La regina Vittoria sposa il principe Alberto"},
+{g:10,m:2,a:1763,d:"Trattato di Parigi: fine Guerra dei Sette Anni"},
+{g:10,m:2,a:1996,d:"Il computer Deep Blue batte Garry Kasparov"},
+{g:11,m:2,a:1990,d:"Nelson Mandela viene liberato dopo 27 anni di prigionia"},
+{g:11,m:2,a:660,d:"Fondazione tradizionale del Giappone"},
+{g:11,m:2,a:1929,d:"Patti Lateranensi tra Italia e Vaticano"},
+{g:12,m:2,a:1809,d:"Nasce Charles Darwin"},
+{g:12,m:2,a:1554,d:"Jane Grey (regina dei nove giorni) viene decapitata"},
+{g:12,m:2,a:1912,d:"L'imperatore Puyi abdica: fine della dinastia Qing"},
+{g:13,m:2,a:1633,d:"Galileo Galilei arriva a Roma per il processo dell'Inquisizione"},
+{g:13,m:2,a:1542,d:"Caterina Howard, quinta moglie di Enrico VIII, decapitata"},
+{g:13,m:2,a:1945,d:"Bombardamento di Dresda"},
+{g:14,m:2,a:1929,d:"Massacro di San Valentino a Chicago"},
+{g:14,m:2,a:1779,d:"Capitano Cook ucciso alle Hawaii"},
+{g:14,m:2,a:1876,d:"Alexander Graham Bell deposita brevetto del telefono"},
+{g:15,m:2,a:1564,d:"Nasce Galileo Galilei a Pisa"},
+{g:15,m:2,a:1898,d:"USS Maine esplode all'Avana (Guerra Ispano-Americana)"},
+{g:15,m:2,a:1971,d:"Introduzione della valuta decimale nel Regno Unito"},
+{g:16,m:2,a:1959,d:"Fidel Castro diventa Primo Ministro di Cuba"},
+{g:16,m:2,a:1852,d:"Apertura dell'Hermitage Museum a San Pietroburgo"},
+{g:16,m:2,a:1918,d:"Lituania dichiara l'indipendenza"},
+{g:17,m:2,a:1600,d:"Giordano Bruno viene arso vivo a Roma"},
+{g:17,m:2,a:1801,d:"Thomas Jefferson eletto presidente dopo pareggio con Burr"},
+{g:17,m:2,a:1864,d:"Sottomarino confederato CSS Hunley affonda USS Housatonic"},
+{g:18,m:2,a:1564,d:"Muore Michelangelo Buonarroti a Roma"},
+{g:18,m:2,a:1930,d:"Clyde Tombaugh scopre Plutone"},
+{g:18,m:2,a:1478,d:"George duca di Clarence annegato in una botte di vino"},
+{g:19,m:2,a:1473,d:"Nasce Nicolò Copernico"},
+{g:19,m:2,a:1942,d:"Ordine Esecutivo 9066: internamento giapponesi-americani"},
+{g:19,m:2,a:1986,d:"Lancio della stazione spaziale Mir"},
+{g:20,m:2,a:1816,d:"Il Barbiere di Siviglia di Rossini debutta a Roma"},
+{g:20,m:2,a:1962,d:"John Glenn diventa il primo americano in orbita"},
+{g:20,m:2,a:1872,d:"Inaugurazione del Metropolitan Museum of Art"},
+{g:21,m:2,a:1848,d:"Pubblicazione del Manifesto del Partito Comunista"},
+{g:21,m:2,a:1965,d:"Malcolm X assassinato a New York"},
+{g:21,m:2,a:1916,d:"Battaglia di Verdun inizia"},
+{g:22,m:2,a:1371,d:"David II di Scozia muore"},
+{g:22,m:2,a:1744,d:"Nasce Johann Gottfried Herder"},
+{g:22,m:2,a:1980,d:"Miracle on Ice: USA batte URSS nell'hockey"},
+{g:23,m:2,a:1455,d:"Johannes Gutenberg stampa la prima Bibbia"},
+{g:23,m:2,a:1945,d:"Marines USA issano bandiera su Iwo Jima"},
+{g:23,m:2,a:1820,d:"Complotto di Cato Street a Londra"},
+{g:24,m:2,a:1530,d:"Carlo V viene incoronato imperatore a Bologna"},
+{g:24,m:2,a:1582,d:"Viene introdotto il calendario gregoriano"},
+{g:24,m:2,a:1920,d:"Il Partito Nazista adotta il programma in 25 punti"},
+{g:25,m:2,a:1956,d:"Nikita Krusciov denuncia i crimini di Stalin"},
+{g:25,m:2,a:1570,d:"Papa Pio V scomunica Elisabetta I"},
+{g:25,m:2,a:1836,d:"Samuel Colt brevetta la pistola revolver"},
+{g:26,m:2,a:1936,d:"Golpe militare in Giappone (Incidente del 26 febbraio)"},
+{g:26,m:2,a:1815,d:"Napoleone fugge dall'Elba"},
+{g:26,m:2,a:1993,d:"Primo attentato al World Trade Center"},
+{g:27,m:2,a:1933,d:"Incendio del Reichstag a Berlino"},
+{g:27,m:2,a:380,d:"Editto di Tessalonica: cristianesimo religione di stato"},
+{g:27,m:2,a:1801,d:"Washington D.C. passa sotto giurisdizione del Congresso"},
+{g:28,m:2,a:1986,d:"Assassinio del premier svedese Olof Palme"},
+{g:28,m:2,a:1953,d:"Watson e Crick scoprono la struttura del DNA"},
+{g:28,m:2,a:1854,d:"Fondazione del Partito Repubblicano USA"},
+{g:29,m:2,a:1960,d:"Terremoto di Agadir in Marocco"},
+{g:29,m:2,a:1504,d:"Cristoforo Colombo usa eclissi lunare per intimidire i nativi"},
+{g:1,m:3,a:1565,d:"Fondazione di Rio de Janeiro"},
+{g:1,m:3,a:1872,d:"Yellowstone diventa primo parco nazionale USA"},
+{g:1,m:3,a:1896,d:"Henri Becquerel scopre la radioattività"},
+{g:2,m:3,a:1955,d:"Muore il re Ibn Saud dell'Arabia Saudita"},
+{g:2,m:3,a:1956,d:"Marocco ottiene l'indipendenza dalla Francia"},
+{g:2,m:3,a:1836,d:"Texas dichiara l'indipendenza dal Messico"},
+{g:3,m:3,a:1861,d:"Abolizione della servitù della gleba in Russia"},
+{g:3,m:3,a:1931,d:"'The Star-Spangled Banner' diventa inno USA"},
+{g:3,m:3,a:1918,d:"Trattato di Brest-Litovsk: Russia esce dalla WWI"},
+{g:4,m:3,a:1789,d:"Entra in vigore la Costituzione degli Stati Uniti"},
+{g:4,m:3,a:1152,d:"Federico Barbarossa eletto re di Germania"},
+{g:4,m:3,a:1394,d:"Ebrei espulsi dalla Francia"},
+{g:5,m:3,a:1953,d:"Stalin muore a Mosca"},
+{g:5,m:3,a:1770,d:"Massacro di Boston"},
+{g:5,m:3,a:1946,d:"Churchill pronuncia il discorso sulla 'Cortina di ferro'"},
+{g:6,m:3,a:1475,d:"Nasce Michelangelo Buonarroti"},
+{g:6,m:3,a:1957,d:"Ghana ottiene l'indipendenza dal Regno Unito"},
+{g:6,m:3,a:1836,d:"Battaglia di Alamo in Texas"},
+{g:7,m:3,a:1876,d:"Alexander Graham Bell brevetta il telefono"},
+{g:7,m:3,a:1965,d:"Marcia da Selma a Montgomery (Bloody Sunday)"},
+{g:7,m:3,a:321,d:"Costantino I dichiara la domenica giorno di riposo"},
+{g:8,m:3,a:1917,d:"Rivoluzione di Febbraio in Russia (calendario giuliano)"},
+{g:8,m:3,a:1618,d:"Giovanni Keplero scopre la terza legge del moto planetario"},
+{g:8,m:3,a:1910,d:"Baroness de Laroche prima donna pilota brevettata"},
+{g:9,m:3,a:1831,d:"Fondazione della Legione Straniera francese"},
+{g:9,m:3,a:1796,d:"Napoleone sposa Giuseppina de Beauharnais"},
+{g:9,m:3,a:1862,d:"Battaglia navale tra Monitor e Merrimack"},
+{g:10,m:3,a:-241,d:"Battaglia delle Isole Egadi: fine Prima Guerra Punica"},
+{g:10,m:3,a:1876,d:"Alexander Graham Bell fa la prima chiamata telefonica"},
+{g:10,m:3,a:1952,d:"Colpo di stato di Batista a Cuba"},
+{g:11,m:3,a:2011,d:"Terremoto e tsunami di Fukushima in Giappone"},
+{g:11,m:3,a:1985,d:"Michail Gorbačëv diventa leader dell'URSS"},
+{g:11,m:3,a:1708,d:"Regina Anna di Gran Bretagna usa il veto per l'ultima volta"},
+{g:12,m:3,a:1930,d:"Gandhi inizia la Marcia del Sale"},
+{g:12,m:3,a:1938,d:"Anschluss: Germania annette l'Austria"},
+{g:12,m:3,a:1933,d:"Primo discorso radiofonico di Franklin D. Roosevelt"},
+{g:13,m:3,a:1781,d:"William Herschel scopre il pianeta Urano"},
+{g:13,m:3,a:1881,d:"Alessandro II di Russia assassinato"},
+{g:13,m:3,a:1954,d:"Inizia la Battaglia di Dien Bien Phu"},
+{g:14,m:3,a:1879,d:"Nasce Albert Einstein"},
+{g:14,m:3,a:1489,d:"Caterina Cornaro cede Cipro a Venezia"},
+{g:14,m:3,a:1950,d:"FBI pubblica la lista dei 10 più ricercati"},
+{g:15,m:3,a:-44,d:"Giulio Cesare assassinato (Idi di Marzo)"},
+{g:15,m:3,a:1917,d:"Nicola II abdica: fine della dinastia Romanov"},
+{g:15,m:3,a:1892,d:"Jesse W. Reno brevetta la scala mobile"},
+{g:16,m:3,a:1978,d:"Rapimento di Aldo Moro dalle Brigate Rosse"},
+{g:16,m:3,a:1521,d:"Ferdinando Magellano arriva nelle Filippine"},
+{g:16,m:3,a:1968,d:"Massacro di My Lai durante la Guerra del Vietnam"},
+{g:17,m:3,a:461,d:"San Patrizio muore in Irlanda"},
+{g:17,m:3,a:1776,d:"I britannici evacuano Boston"},
+{g:17,m:3,a:1861,d:"Proclamazione del Regno d'Italia"},
+{g:18,m:3,a:1871,d:"Inizia la Comune di Parigi"},
+{g:18,m:3,a:1965,d:"Primo spacewalk (Aleksej Leonov)"},
+{g:18,m:3,a:1922,d:"Gandhi condannato a 6 anni di prigione"},
+{g:19,m:3,a:1812,d:"Le Cortes di Cadice promulgano la Costituzione spagnola"},
+{g:19,m:3,a:1831,d:"Prima rapina in banca della storia USA"},
+{g:19,m:3,a:2003,d:"Inizio invasione dell'Iraq (Operazione Iraqi Freedom)"},
+{g:20,m:3,a:1602,d:"Fondazione della Compagnia Olandese delle Indie Orientali"},
+{g:20,m:3,a:1727,d:"Isaac Newton muore"},
+{g:20,m:3,a:1815,d:"Napoleone entra a Parigi dopo la fuga dall'Elba"},
+{g:21,m:3,a:1960,d:"Massacro di Sharpeville in Sudafrica"},
+{g:21,m:3,a:1804,d:"Viene promulgato il Codice Napoleonico"},
+{g:21,m:3,a:630,d:"L'imperatore Eraclio entra a Gerusalemme"},
+{g:22,m:3,a:1945,d:"Nasce la Lega Araba"},
+{g:22,m:3,a:1638,d:"Religiosa Anne Hutchinson bandita dalla colonia del Massachusetts"},
+{g:22,m:3,a:1312,d:"L'Ordine dei Templari viene abolito"},
+{g:23,m:3,a:1983,d:"Reagan annuncia il progetto Strategic Defense Initiative"},
+{g:23,m:3,a:1919,d:"Benito Mussolini fonda i Fasci di Combattimento"},
+{g:23,m:3,a:1857,d:"Elisha Otis installa il primo ascensore pubblico"},
+{g:24,m:3,a:1603,d:"Muore Elisabetta I d'Inghilterra"},
+{g:24,m:3,a:1882,d:"Robert Koch annuncia la scoperta del bacillo della tubercolosi"},
+{g:24,m:3,a:1989,d:"Petroliera Exxon Valdez causa disastro ambientale in Alaska"},
+{g:25,m:3,a:1957,d:"Firma dei Trattati di Roma (nascita della CEE)"},
+{g:25,m:3,a:1807,d:"Gran Bretagna abolisce la tratta degli schiavi"},
+{g:25,m:3,a:1199,d:"Riccardo Cuor di Leone muore"},
+{g:26,m:3,a:1827,d:"Muore Ludwig van Beethoven"},
+{g:26,m:3,a:1979,d:"Accordi di Camp David: pace tra Egitto e Israele"},
+{g:26,m:3,a:1953,d:"Jonas Salk annuncia il vaccino contro la polio"},
+{g:27,m:3,a:1977,d:"Disastro aereo di Tenerife (583 morti)"},
+{g:27,m:3,a:1513,d:"Juan Ponce de León scopre la Florida"},
+{g:27,m:3,a:1854,d:"Francia e Gran Bretagna dichiarano guerra alla Russia (Guerra di Crimea)"},
+{g:28,m:3,a:193,d:"Pertinace assassinato, impero romano venduto all'asta"},
+{g:28,m:3,a:845,d:"Vichinghi saccheggiano Parigi"},
+{g:28,m:3,a:1979,d:"Incidente nucleare di Three Mile Island"},
+{g:29,m:3,a:1461,d:"Battaglia di Towton durante la Guerra delle Due Rose"},
+{g:29,m:3,a:1886,d:"Viene inventata la Coca-Cola"},
+{g:29,m:3,a:1974,d:"Esercito di Terracotta scoperto in Cina"},
+{g:30,m:3,a:1282,d:"Vespri Siciliani contro gli Angioini"},
+{g:30,m:3,a:1981,d:"Attentato a Ronald Reagan"},
+{g:30,m:3,a:1867,d:"Alaska acquistata dalla Russia (Seward's Folly)"},
+{g:31,m:3,a:1889,d:"Inaugurazione della Torre Eiffel a Parigi"},
+{g:31,m:3,a:1492,d:"Decreto dell'Alhambra: espulsione degli ebrei dalla Spagna"},
+{g:31,m:3,a:1918,d:"Introduzione dell'ora legale negli USA"},
+{g:1,m:4,a:1976,d:"Steve Jobs e Steve Wozniak fondano Apple"},
+{g:1,m:4,a:1939,d:"Fine della Guerra Civile Spagnola"},
+{g:1,m:4,a:1918,d:"Nasce la Royal Air Force"},
+{g:2,m:4,a:1982,d:"L'Argentina invade le Isole Falkland"},
+{g:2,m:4,a:1513,d:"Juan Ponce de León arriva in Florida"},
+{g:2,m:4,a:1792,d:"USA introduce la valuta decimale"},
+{g:3,m:4,a:1973,d:"Martin Cooper effettua la prima chiamata da cellulare"},
+{g:3,m:4,a:1860,d:"Inizia il Pony Express"},
+{g:3,m:4,a:1043,d:"Edoardo il Confessore incoronato re d'Inghilterra"},
+{g:4,m:4,a:1968,d:"Martin Luther King Jr. assassinato a Memphis"},
+{g:4,m:4,a:1949,d:"Firma del Trattato del Nord Atlantico (NATO)"},
+{g:4,m:4,a:1581,d:"Francis Drake ricevuto dalla Regina dopo circumnavigazione"},
+{g:5,m:4,a:1955,d:"Winston Churchill si dimette da Primo Ministro"},
+{g:5,m:4,a:1887,d:"Anne Sullivan inizia a insegnare a Helen Keller"},
+{g:5,m:4,a:1614,d:"Pocahontas sposa John Rolfe"},
+{g:6,m:4,a:1896,d:"Prima edizione delle Olimpiadi moderne ad Atene"},
+{g:6,m:4,a:1909,d:"Robert Peary raggiunge il Polo Nord"},
+{g:6,m:4,a:1652,d:"Jan van Riebeeck fonda Città del Capo"},
+{g:7,m:4,a:1948,d:"Fondazione dell'Organizzazione Mondiale della Sanità"},
+{g:7,m:4,a:1795,d:"Francia adotta il sistema metrico decimale"},
+{g:7,m:4,a:1927,d:"Prima dimostrazione pubblica della televisione"},
+{g:8,m:4,a:1820,d:"Scoperta della Venere di Milo"},
+{g:8,m:4,a:1904,d:"Accordo Anglo-Francese (Entente Cordiale)"},
+{g:8,m:4,a:217,d:"Caracalla assassinato"},
+{g:9,m:4,a:1865,d:"Resa di Lee ad Appomattox: fine Guerra Civile USA"},
+{g:9,m:4,a:1940,d:"Germania invade Danimarca e Norvegia"},
+{g:9,m:4,a:1413,d:"Enrico V diventa re d'Inghilterra"},
+{g:10,m:4,a:1815,d:"Eruzione del vulcano Tambora in Indonesia"},
+{g:10,m:4,a:1912,d:"RMS Titanic salpa da Southampton"},
+{g:10,m:4,a:1710,d:"Statuto di Anna: prima legge sul copyright"},
+{g:11,m:4,a:1961,d:"Processo ad Adolf Eichmann a Gerusalemme"},
+{g:11,m:4,a:1713,d:"Trattato di Utrecht: fine Guerra di Successione Spagnola"},
+{g:11,m:4,a:1979,d:"Idi Amin rovesciato in Uganda"},
+{g:12,m:4,a:1961,d:"Jurij Gagarin primo uomo nello spazio"},
+{g:12,m:4,a:1945,d:"Harry Truman diventa presidente USA"},
+{g:12,m:4,a:1606,d:"Adottata la prima Union Flag britannica"},
+{g:13,m:4,a:1970,d:"Esplosione sul modulo Apollo 13"},
+{g:13,m:4,a:1742,d:"Premiere del Messiah di Handel a Dublino"},
+{g:13,m:4,a:1598,d:"Editto di Nantes garantisce tolleranza religiosa in Francia"},
+{g:14,m:4,a:1865,d:"Abraham Lincoln assassinato al Ford's Theatre"},
+{g:14,m:4,a:1912,d:"RMS Titanic colpisce un iceberg"},
+{g:14,m:4,a:1828,d:"Viene pubblicato il primo dizionario Webster"},
+{g:15,m:4,a:1452,d:"Nasce Leonardo da Vinci"},
+{g:15,m:4,a:1989,d:"Rivolta di Piazza Tienanmen in Cina"},
+{g:15,m:4,a:1912,d:"RMS Titanic affonda"},
+{g:16,m:4,a:1917,d:"Lenin rientra in Russia dall'esilio"},
+{g:16,m:4,a:1945,d:"Battaglia di Berlino inizia"},
+{g:16,m:4,a:1889,d:"Charlie Chaplin nasce a Londra"},
+{g:17,m:4,a:1975,d:"I Khmer Rossi prendono Phnom Penh"},
+{g:17,m:4,a:1961,d:"Invasione della Baia dei Porci a Cuba"},
+{g:17,m:4,a:1521,d:"Martin Lutero alla Dieta di Worms"},
+{g:18,m:4,a:1906,d:"Terremoto di San Francisco"},
+{g:18,m:4,a:1955,d:"Albert Einstein muore"},
+{g:18,m:4,a:1775,d:"Paul Revere avverte che 'i britannici stanno arrivando'"},
+{g:19,m:4,a:1775,d:"Battaglia di Lexington: inizia Rivoluzione Americana"},
+{g:19,m:4,a:1995,d:"Attentato di Oklahoma City"},
+{g:19,m:4,a:1897,d:"Prima maratona di Boston"},
+{g:20,m:4,a:1889,d:"Nasce Adolf Hitler"},
+{g:20,m:4,a:1999,d:"Sparatoria alla Columbine High School"},
+{g:20,m:4,a:1902,d:"Marie e Pierre Curie isolano il radio"},
+{g:21,m:4,a:-753,d:"Fondazione di Roma secondo la leggenda"},
+{g:21,m:4,a:1918,d:"Manfred von Richthofen (Barone Rosso) abbattuto"},
+{g:21,m:4,a:1509,d:"Enrico VIII diventa re d'Inghilterra"},
+{g:22,m:4,a:1500,d:"Pedro Álvares Cabral scopre il Brasile"},
+{g:22,m:4,a:1915,d:"Primo uso di gas velenoso (Ypres)"},
+{g:22,m:4,a:1970,d:"Primo Earth Day"},
+{g:23,m:4,a:1616,d:"Muore William Shakespeare"},
+{g:23,m:4,a:1661,d:"Carlo II d'Inghilterra incoronato"},
+{g:23,m:4,a:1968,d:"Prima partita con arbitro donna (calcio)"},
+{g:24,m:4,a:-1184,d:"Caduta di Troia (data tradizionale)"},
+{g:24,m:4,a:1800,d:"Fondazione della Library of Congress"},
+{g:24,m:4,a:1990,d:"Lancio del telescopio spaziale Hubble"},
+{g:25,m:4,a:1945,d:"Incontro tra truppe americane e sovietiche sull'Elba"},
+{g:25,m:4,a:1974,d:"Rivoluzione dei Garofani in Portogallo"},
+{g:25,m:4,a:1792,d:"Prima esecuzione con la ghigliottina"},
+{g:26,m:4,a:1986,d:"Disastro di Chernobyl"},
+{g:26,m:4,a:1564,d:"Nasce William Shakespeare"},
+{g:26,m:4,a:1937,d:"Bombardamento di Guernica"},
+{g:27,m:4,a:1521,d:"Ferdinando Magellano muore nelle Filippine"},
+{g:27,m:4,a:1791,d:"Samuel Morse nasce"},
+{g:27,m:4,a:1565,d:"Fondazione di Cebu nelle Filippine"},
+{g:28,m:4,a:1945,d:"Benito Mussolini fucilato"},
+{g:28,m:4,a:1789,d:"Ammutinamento del Bounty"},
+{g:28,m:4,a:1967,d:"Muhammad Ali rifiuta la leva militare"},
+{g:29,m:4,a:1945,d:"Hitler sposa Eva Braun nel bunker"},
+{g:29,m:4,a:1992,d:"Rivolta di Los Angeles dopo verdetto Rodney King"},
+{g:29,m:4,a:1429,d:"Giovanna d'Arco entra a Orléans"},
+{g:30,m:4,a:1945,d:"Adolf Hitler si suicida nel bunker"},
+{g:30,m:4,a:1789,d:"George Washington presta giuramento come presidente"},
+{g:30,m:4,a:1803,d:"Louisiana Purchase: USA acquistano Louisiana dalla Francia"},
+{g:1,m:5,a:1886,d:"Rivolta di Haymarket a Chicago (Festa dei Lavoratori)"},
+{g:1,m:5,a:1707,d:"Atto di Unione: nasce il Regno di Gran Bretagna"},
+{g:1,m:5,a:1931,d:"Inaugurazione dell'Empire State Building"},
+{g:2,m:5,a:1519,d:"Leonardo da Vinci muore in Francia"},
+{g:2,m:5,a:1611,d:"King James Bible pubblicata"},
+{g:2,m:5,a:1945,d:"Berlino si arrende all'Armata Rossa"},
+{g:3,m:5,a:1791,d:"Polonia adotta la prima costituzione europea"},
+{g:3,m:5,a:1947,d:"Nuova costituzione del Giappone entra in vigore"},
+{g:3,m:5,a:1968,d:"Rivolta studentesca a Parigi (Maggio '68)"},
+{g:4,m:5,a:1776,d:"Rhode Island dichiara l'indipendenza"},
+{g:4,m:5,a:1979,d:"Margaret Thatcher diventa Primo Ministro britannico"},
+{g:4,m:5,a:1493,d:"Papa Alessandro VI divide il Nuovo Mondo"},
+{g:5,m:5,a:1821,d:"Napoleone Bonaparte muore a Sant'Elena"},
+{g:5,m:5,a:1961,d:"Alan Shepard primo americano nello spazio"},
+{g:5,m:5,a:1818,d:"Nasce Karl Marx"},
+{g:6,m:5,a:1527,d:"Sacco di Roma da parte dei Lanzichenecchi"},
+{g:6,m:5,a:1937,d:"Disastro dell'Hindenburg"},
+{g:6,m:5,a:1994,d:"Inaugurazione del Tunnel della Manica"},
+{g:7,m:5,a:1945,d:"Germania firma la resa incondizionata"},
+{g:7,m:5,a:1915,d:"RMS Lusitania silurato dai tedeschi"},
+{g:7,m:5,a:1824,d:"Premiere della Nona Sinfonia di Beethoven"},
+{g:8,m:5,a:1945,d:"Giorno della Vittoria in Europa (V-E Day)"},
+{g:8,m:5,a:1429,d:"Giovanna d'Arco libera Orléans"},
+{g:8,m:5,a:1886,d:"Coca-Cola venduta per la prima volta"},
+{g:9,m:5,a:1950,d:"Dichiarazione Schuman: primo passo verso UE"},
+{g:9,m:5,a:1978,d:"Aldo Moro trovato morto a Roma"},
+{g:9,m:5,a:1926,d:"Richard Byrd sorvola il Polo Nord"},
+{g:10,m:5,a:1940,d:"Winston Churchill diventa Primo Ministro britannico"},
+{g:10,m:5,a:1933,d:"Rogo dei libri in Germania nazista"},
+{g:10,m:5,a:1869,d:"Cerimonia del Golden Spike (ferrovia transcontinentale USA)"},
+{g:11,m:5,a:330,d:"Costantinopoli diventa capitale dell'Impero Romano"},
+{g:11,m:5,a:1867,d:"Lussemburgo diventa indipendente"},
+{g:11,m:5,a:1858,d:"Minnesota diventa il 32° stato USA"},
+{g:12,m:5,a:1949,d:"Fine del Blocco di Berlino"},
+{g:12,m:5,a:1937,d:"Incoronazione di Giorgio VI"},
+{g:12,m:5,a:1551,d:"Fondazione dell'Università Nazionale di San Marcos (Lima)"},
+{g:13,m:5,a:1917,d:"Apparizione della Madonna di Fatima"},
+{g:13,m:5,a:1981,d:"Attentato a Papa Giovanni Paolo II"},
+{g:13,m:5,a:1607,d:"Jamestown fondata in Virginia"},
+{g:14,m:5,a:1948,d:"Proclamazione dello Stato di Israele"},
+{g:14,m:5,a:1610,d:"François Ravaillac assassina Enrico IV di Francia"},
+{g:14,m:5,a:1796,d:"Edward Jenner somministra il primo vaccino"},
+{g:15,m:5,a:1618,d:"Defenestrazione di Praga: inizio Guerra dei Trent'anni"},
+{g:15,m:5,a:1957,d:"Regno Unito testa la prima bomba H"},
+{g:15,m:5,a:1928,d:"Topolino debutta in 'Plane Crazy'"},
+{g:16,m:5,a:1929,d:"Prima edizione dei Premi Oscar"},
+{g:16,m:5,a:1770,d:"Maria Antonietta sposa Luigi XVI"},
+{g:16,m:5,a:1943,d:"Rivolta del Ghetto di Varsavia termina"},
+{g:17,m:5,a:1973,d:"Inizio delle udienze Watergate"},
+{g:17,m:5,a:1954,d:"Corte Suprema USA: Brown v. Board of Education"},
+{g:17,m:5,a:1792,d:"Fondazione della Borsa di New York"},
+{g:18,m:5,a:1804,d:"Napoleone Bonaparte proclamato imperatore"},
+{g:18,m:5,a:1980,d:"Eruzione del Monte St. Helens"},
+{g:18,m:5,a:1944,d:"Deportazione dei Tatari di Crimea"},
+{g:19,m:5,a:1536,d:"Anna Bolena decapitata"},
+{g:19,m:5,a:1935,d:"T.E. Lawrence (Lawrence d'Arabia) muore"},
+{g:19,m:5,a:1588,d:"Invincibile Armada salpa da Lisbona"},
+{g:20,m:5,a:1498,d:"Vasco da Gama arriva in India"},
+{g:20,m:5,a:1873,d:"Levi Strauss e Jacob Davis brevettano i blue jeans"},
+{g:20,m:5,a:1927,d:"Lindbergh atterra a Parigi completando il volo transatlantico"},
+{g:21,m:5,a:1927,d:"Lindbergh arriva a Parigi"},
+{g:21,m:5,a:1881,d:"Fondazione della Croce Rossa Americana"},
+{g:21,m:5,a:1471,d:"Albrecht Dürer nasce a Norimberga"},
+{g:22,m:5,a:1176,d:"Battaglia di Legnano: Lega Lombarda vs Barbarossa"},
+{g:22,m:5,a:1455,d:"Inizia la Guerra delle Due Rose"},
+{g:22,m:5,a:1960,d:"Terremoto in Cile (9.5, il più forte mai registrato)"},
+{g:23,m:5,a:1618,d:"Seconda defenestrazione di Praga"},
+{g:23,m:5,a:1945,d:"Heinrich Himmler si suicida"},
+{g:23,m:5,a:1533,d:"Enrico VIII annulla il matrimonio con Caterina d'Aragona"},
+{g:24,m:5,a:1844,d:"Samuel Morse invia il primo telegramma"},
+{g:24,m:5,a:1883,d:"Inaugurazione del Ponte di Brooklyn"},
+{g:24,m:5,a:1940,d:"Igor Sikorsky pilota il primo elicottero di successo"},
+{g:25,m:5,a:1085,d:"Alfonso VI conquista Toledo"},
+{g:25,m:5,a:1961,d:"JFK annuncia obiettivo di andare sulla Luna"},
+{g:25,m:5,a:1787,d:"Convenzione Costituzionale inizia a Filadelfia"},
+{g:26,m:5,a:1897,d:"Bram Stoker pubblica 'Dracula'"},
+{g:26,m:5,a:1868,d:"Impeachment di Andrew Johnson fallisce per un voto"},
+{g:26,m:5,a:1938,d:"Volkswagen viene fondata"},
+{g:27,m:5,a:1703,d:"Fondazione di San Pietroburgo"},
+{g:27,m:5,a:1941,d:"Bismarck affondata"},
+{g:27,m:5,a:1937,d:"Inaugurazione del Golden Gate Bridge"},
+{g:28,m:5,a:-585,d:"Eclissi di Talete: fine guerra Medi-Lidi"},
+{g:28,m:5,a:1588,d:"L'Invincibile Armada salpa verso l'Inghilterra"},
+{g:28,m:5,a:1830,d:"Indian Removal Act firmato da Andrew Jackson"},
+{g:29,m:5,a:1453,d:"Caduta di Costantinopoli: fine Impero Romano d'Oriente"},
+{g:29,m:5,a:1913,d:"Premiere de 'Le Sacre du Printemps' di Stravinskij"},
+{g:29,m:5,a:1660,d:"Restaurazione della monarchia in Inghilterra"},
+{g:30,m:5,a:1431,d:"Giovanna d'Arco bruciata sul rogo"},
+{g:30,m:5,a:1911,d:"Prima Indianapolis 500"},
+{g:30,m:5,a:1966,d:"Surveyor 1 atterra sulla Luna"},
+{g:31,m:5,a:1902,d:"Trattato di Vereeniging: fine Guerra Boera"},
+{g:31,m:5,a:1889,d:"Disastro di Johnstown (inondazione in Pennsylvania)"},
+{g:31,m:5,a:1859,d:"Big Ben suona per la prima volta"},
+{g:1,m:6,a:1980,d:"CNN inizia le trasmissioni"},
+{g:1,m:6,a:1533,d:"Anna Bolena incoronata Regina d'Inghilterra"},
+{g:1,m:6,a:1812,d:"USA dichiara guerra alla Gran Bretagna (Guerra del 1812)"},
+{g:2,m:6,a:1946,d:"Referendum istituzionale: nasce la Repubblica Italiana"},
+{g:2,m:6,a:1953,d:"Incoronazione di Elisabetta II"},
+{g:2,m:6,a:1692,d:"Bridget Bishop impiccata (Processi di Salem)"},
+{g:3,m:6,a:1989,d:"Massacro di Piazza Tienanmen"},
+{g:3,m:6,a:1937,d:"Edward VIII sposa Wallis Simpson"},
+{g:3,m:6,a:1621,d:"Compagnia Olandese delle Indie Occidentali fondata"},
+{g:4,m:6,a:1989,d:"Prime elezioni semi-libere in Polonia"},
+{g:4,m:6,a:1940,d:"Evacuazione di Dunkerque completata"},
+{g:4,m:6,a:1783,d:"Fratelli Montgolfier dimostrano la mongolfiera"},
+{g:5,m:6,a:1967,d:"Inizia la Guerra dei Sei Giorni"},
+{g:5,m:6,a:1947,d:"Piano Marshall annunciato"},
+{g:5,m:6,a:1916,d:"Affonda HMS Hampshire, muore Lord Kitchener"},
+{g:6,m:6,a:1944,d:"D-Day: sbarco in Normandia"},
+{g:6,m:6,a:1918,d:"Battaglia di Belleau Wood inizia"},
+{g:6,m:6,a:1984,d:"Operazione Blue Star al Tempio d'Oro"},
+{g:7,m:6,a:1494,d:"Trattato di Tordesillas tra Spagna e Portogallo"},
+{g:7,m:6,a:1654,d:"Luigi XIV incoronato re di Francia"},
+{g:7,m:6,a:1929,d:"Stato del Vaticano diventa indipendente"},
+{g:8,m:6,a:632,d:"Muore Maometto"},
+{g:8,m:6,a:1789,d:"James Madison propone il Bill of Rights"},
+{g:8,m:6,a:68,d:"Imperatore Nerone si suicida"},
+{g:9,m:6,a:68,d:"Nerone si suicida"},
+{g:9,m:6,a:1815,d:"Atto Finale del Congresso di Vienna"},
+{g:9,m:6,a:1934,d:"Paperino debutta in 'La Gallinella Saggia'"},
+{g:10,m:6,a:1940,d:"L'Italia entra nella Seconda Guerra Mondiale"},
+{g:10,m:6,a:1692,d:"Prima esecuzione durante i processi di Salem"},
+{g:10,m:6,a:1776,d:"Congresso Continentale nomina comitato per Dichiarazione"},
+{g:11,m:6,a:1984,d:"Morte di Enrico Berlinguer"},
+{g:11,m:6,a:1509,d:"Enrico VIII sposa Caterina d'Aragona"},
+{g:11,m:6,a:1962,d:"Tre prigionieri fuggono da Alcatraz"},
+{g:12,m:6,a:1942,d:"Anna Frank riceve il diario per il compleanno"},
+{g:12,m:6,a:1898,d:"Filippine dichiarano l'indipendenza"},
+{g:12,m:6,a:1665,d:"Inghilterra installa un servizio postale"},
+{g:13,m:6,a:-323,d:"Alessandro Magno muore a Babilonia"},
+{g:13,m:6,a:1983,d:"Pioneer 10 lascia il sistema solare"},
+{g:13,m:6,a:1525,d:"Martin Lutero sposa Katharina von Bora"},
+{g:14,m:6,a:1800,d:"Battaglia di Marengo: vittoria di Napoleone"},
+{g:14,m:6,a:1777,d:"USA adottano la bandiera Stars and Stripes"},
+{g:14,m:6,a:1940,d:"Primo prigioniero arriva ad Auschwitz"},
+{g:15,m:6,a:1215,d:"Re Giovanni firma la Magna Carta"},
+{g:15,m:6,a:1667,d:"Prima trasfusione di sangue a un essere umano"},
+{g:15,m:6,a:1846,d:"Trattato dell'Oregon: confine USA-Canada al 49° parallelo"},
+{g:16,m:6,a:1963,d:"Valentina Tereskova prima donna nello spazio"},
+{g:16,m:6,a:1487,d:"Battaglia di Stoke Field: fine Guerra delle Due Rose"},
+{g:16,m:6,a:1903,d:"Viene fondata la Ford Motor Company"},
+{g:17,m:6,a:1972,d:"Scandalo Watergate: furto con scasso"},
+{g:17,m:6,a:1775,d:"Battaglia di Bunker Hill"},
+{g:17,m:6,a:1940,d:"Appello del 18 giugno di de Gaulle"},
+{g:18,m:6,a:1815,d:"Battaglia di Waterloo: sconfitta di Napoleone"},
+{g:18,m:6,a:1812,d:"USA dichiara guerra alla Gran Bretagna"},
+{g:18,m:6,a:1983,d:"Sally Ride diventa prima donna americana nello spazio"},
+{g:19,m:6,a:1867,d:"Massimiliano d'Asburgo fucilato in Messico"},
+{g:19,m:6,a:1953,d:"Julius e Ethel Rosenberg giustiziati"},
+{g:19,m:6,a:1846,d:"Prima partita di baseball secondo regole moderne"},
+{g:20,m:6,a:1837,d:"Vittoria diventa Regina del Regno Unito"},
+{g:20,m:6,a:1789,d:"Giuramento della Pallacorda"},
+{g:20,m:6,a:1963,d:"Hotline Washington-Mosca istituita"},
+{g:21,m:6,a:1527,d:"Niccolò Machiavelli muore a Firenze"},
+{g:21,m:6,a:1788,d:"New Hampshire ratifica la Costituzione USA"},
+{g:21,m:6,a:1919,d:"Marina tedesca affonda la propria flotta a Scapa Flow"},
+{g:22,m:6,a:1633,d:"Galileo Galilei abiura le sue teorie"},
+{g:22,m:6,a:1941,d:"Operazione Barbarossa: Germania invade l'URSS"},
+{g:22,m:6,a:1906,d:"Wiley Post e Harold Gatty completano giro del mondo in 8 giorni"},
+{g:23,m:6,a:1757,d:"Battaglia di Plassey: dominio britannico in India"},
+{g:23,m:6,a:1868,d:"Christopher Latham Sholes brevetta la macchina da scrivere"},
+{g:23,m:6,a:1961,d:"Trattato Antartico entra in vigore"},
+{g:24,m:6,a:1894,d:"Assassinio del presidente francese Sadi Carnot"},
+{g:24,m:6,a:1314,d:"Battaglia di Bannockburn: Scozia vs Inghilterra"},
+{g:24,m:6,a:1948,d:"Blocco di Berlino inizia"},
+{g:25,m:6,a:1876,d:"Battaglia di Little Bighorn: Custer sconfitto"},
+{g:25,m:6,a:1950,d:"Inizia la Guerra di Corea"},
+{g:25,m:6,a:1903,d:"George Orwell nasce"},
+{g:26,m:6,a:1945,d:"Firma della Carta delle Nazioni Unite"},
+{g:26,m:6,a:1963,d:"JFK: 'Ich bin ein Berliner'"},
+{g:26,m:6,a:1541,d:"Francisco Pizarro assassinato a Lima"},
+{g:27,m:6,a:1905,d:"Ammutinamento della corazzata Potëmkin"},
+{g:27,m:6,a:1844,d:"Joseph Smith ucciso da una folla"},
+{g:27,m:6,a:1950,d:"Truman ordina truppe in Corea"},
+{g:28,m:6,a:1914,d:"Assassinio dell'arciduca Francesco Ferdinando"},
+{g:28,m:6,a:1919,d:"Trattato di Versailles firmato"},
+{g:28,m:6,a:1838,d:"Incoronazione della Regina Vittoria"},
+{g:29,m:6,a:1613,d:"Globe Theatre brucia durante spettacolo"},
+{g:29,m:6,a:1974,d:"Isabel Perón diventa presidente dell'Argentina"},
+{g:29,m:6,a:1927,d:"Primo volo transatlantico commerciale"},
+{g:30,m:6,a:1520,d:"Noche Triste: Cortés cacciato da Tenochtitlan"},
+{g:30,m:6,a:1859,d:"Blondin attraversa le Cascate del Niagara su corda"},
+{g:30,m:6,a:1936,d:"Via col vento pubblicato"},
+{g:1,m:7,a:1916,d:"Battaglia della Somme inizia"},
+{g:1,m:7,a:1969,d:"Investitura del Principe Carlo"},
+{g:1,m:7,a:1863,d:"Battaglia di Gettysburg inizia"},
+{g:2,m:7,a:1900,d:"Primo volo dello Zeppelin"},
+{g:2,m:7,a:1976,d:"Vietnam riunificato"},
+{g:2,m:7,a:1937,d:"Amelia Earhart scompare nel Pacifico"},
+{g:3,m:7,a:1608,d:"Fondazione di Quebec da Champlain"},
+{g:3,m:7,a:1988,d:"USS Vincennes abbatte volo Iran Air 655"},
+{g:3,m:7,a:1754,d:"George Washington si arrende a Fort Necessity"},
+{g:4,m:7,a:1776,d:"Dichiarazione d'Indipendenza USA"},
+{g:4,m:7,a:1946,d:"Filippine ottengono l'indipendenza"},
+{g:4,m:7,a:1865,d:"Alice nel Paese delle Meraviglie pubblicato"},
+{g:5,m:7,a:1811,d:"Venezuela dichiara l'indipendenza"},
+{g:5,m:7,a:1946,d:"Viene presentato il bikini"},
+{g:5,m:7,a:1687,d:"Newton pubblica Principia Mathematica"},
+{g:6,m:7,a:1535,d:"Tommaso Moro decapitato"},
+{g:6,m:7,a:1885,d:"Louis Pasteur testa il vaccino contro la rabbia"},
+{g:6,m:7,a:1944,d:"Hartford Circus Fire"},
+{g:7,m:7,a:1937,d:"Inizio Seconda Guerra Sino-Giapponese"},
+{g:7,m:7,a:1898,d:"USA annettono le Hawaii"},
+{g:7,m:7,a:1456,d:"Giovanna d'Arco riabilitata postuma"},
+{g:8,m:7,a:1497,d:"Vasco da Gama parte per l'India"},
+{g:8,m:7,a:1621,d:"Jean de La Fontaine nasce"},
+{g:8,m:7,a:1889,d:"Prima edizione del Wall Street Journal"},
+{g:9,m:7,a:1776,d:"Prima lettura pubblica Dichiarazione Indipendenza"},
+{g:9,m:7,a:1816,d:"Argentina dichiara l'indipendenza"},
+{g:9,m:7,a:1850,d:"Zachary Taylor muore in carica"},
+{g:10,m:7,a:1940,d:"Inizia Battaglia d'Inghilterra"},
+{g:10,m:7,a:1856,d:"Nikola Tesla nasce"},
+{g:10,m:7,a:1913,d:"Death Valley raggiunge 56.7°C"},
+{g:11,m:7,a:1302,d:"Battaglia degli Speroni d'Oro"},
+{g:11,m:7,a:1804,d:"Duello Hamilton-Burr: Hamilton muore"},
+{g:11,m:7,a:1950,d:"Inizia la Battaglia del Pusan Perimeter"},
+{g:12,m:7,a:-100,d:"Nascita di Giulio Cesare (tradizionale)"},
+{g:12,m:7,a:1543,d:"Enrico VIII sposa Caterina Parr"},
+{g:12,m:7,a:1862,d:"Medal of Honor autorizzata dal Congresso USA"},
+{g:13,m:7,a:1793,d:"Jean-Paul Marat assassinato da Charlotte Corday"},
+{g:13,m:7,a:1977,d:"Blackout di New York"},
+{g:13,m:7,a:1985,d:"Concerto Live Aid"},
+{g:14,m:7,a:1789,d:"Presa della Bastiglia: Rivoluzione Francese"},
+{g:14,m:7,a:1865,d:"Prima scalata del Cervino"},
+{g:14,m:7,a:1850,d:"William Wordsworth muore"},
+{g:15,m:7,a:1099,d:"Crociati conquistano Gerusalemme"},
+{g:15,m:7,a:1918,d:"Seconda Battaglia della Marna"},
+{g:15,m:7,a:1965,d:"Mariner 4 invia prime foto di Marte"},
+{g:16,m:7,a:1945,d:"Test Trinity: prima esplosione nucleare"},
+{g:16,m:7,a:1969,d:"Apollo 11 parte per la Luna"},
+{g:16,m:7,a:1918,d:"Famiglia Romanov giustiziata"},
+{g:17,m:7,a:1918,d:"Zar Nicola II e famiglia giustiziati"},
+{g:17,m:7,a:1945,d:"Conferenza di Potsdam inizia"},
+{g:17,m:7,a:1955,d:"Disneyland apre in California"},
+{g:18,m:7,a:64,d:"Grande incendio di Roma sotto Nerone"},
+{g:18,m:7,a:1918,d:"Nelson Mandela nasce"},
+{g:18,m:7,a:1936,d:"Inizio Guerra Civile Spagnola"},
+{g:19,m:7,a:711,d:"Battaglia di Guadalete: musulmani in Spagna"},
+{g:19,m:7,a:1545,d:"Mary Rose affonda"},
+{g:19,m:7,a:1848,d:"Convenzione di Seneca Falls (diritti donne)"},
+{g:20,m:7,a:1969,d:"Apollo 11: sbarco sulla Luna"},
+{g:20,m:7,a:1944,d:"Operazione Valchiria: attentato a Hitler fallisce"},
+{g:20,m:7,a:1973,d:"Bruce Lee muore"},
+{g:21,m:7,a:365,d:"Terremoto di Creta distrugge Alessandria"},
+{g:21,m:7,a:1861,d:"Prima Battaglia di Bull Run"},
+{g:21,m:7,a:1831,d:"Leopoldo I diventa re del Belgio"},
+{g:22,m:7,a:1812,d:"Battaglia di Salamanca"},
+{g:22,m:7,a:1934,d:"John Dillinger ucciso dall'FBI"},
+{g:22,m:7,a:1946,d:"Bomba all'Hotel King David a Gerusalemme"},
+{g:23,m:7,a:1952,d:"Colpo di stato dei Liberi Ufficiali in Egitto"},
+{g:23,m:7,a:1632,d:"Tre Moschettieri pubblicati (Dumas)"},
+{g:23,m:7,a:1840,d:"Atto di Unione del Canada"},
+{g:24,m:7,a:1911,d:"Hiram Bingham scopre Machu Picchu"},
+{g:24,m:7,a:1943,d:"Caduta di Mussolini"},
+{g:24,m:7,a:1969,d:"Apollo 11 ritorna sulla Terra"},
+{g:25,m:7,a:306,d:"Costantino I proclamato imperatore"},
+{g:25,m:7,a:1909,d:"Louis Blériot attraversa la Manica in aereo"},
+{g:25,m:7,a:1978,d:"Nasce Louise Brown, primo bebé in provetta"},
+{g:26,m:7,a:1956,d:"Nasser nazionalizza Canale di Suez"},
+{g:26,m:7,a:1847,d:"Liberia diventa indipendente"},
+{g:26,m:7,a:1908,d:"FBI viene fondata"},
+{g:27,m:7,a:1953,d:"Armistizio di Panmunjom: fine Guerra Corea"},
+{g:27,m:7,a:1794,d:"Caduta di Robespierre"},
+{g:27,m:7,a:1866,d:"Primo cavo telegrafico transatlantico completato"},
+{g:28,m:7,a:1914,d:"Austria-Ungheria dichiara guerra alla Serbia (WWI)"},
+{g:28,m:7,a:1868,d:"14° Emendamento ratificato"},
+{g:28,m:7,a:1540,d:"Thomas Cromwell decapitato"},
+{g:29,m:7,a:1588,d:"Armada spagnola sconfitta dagli inglesi"},
+{g:29,m:7,a:1981,d:"Matrimonio di Carlo e Diana"},
+{g:29,m:7,a:1907,d:"Baden-Powell organizza primo campo scout"},
+{g:30,m:7,a:1932,d:"Olimpiadi di Los Angeles inaugurate"},
+{g:30,m:7,a:1619,d:"Prima assemblea rappresentativa in America (Virginia)"},
+{g:30,m:7,a:1863,d:"Henry Ford nasce"},
+{g:31,m:7,a:1498,d:"Cristoforo Colombo scopre Trinidad"},
+{g:31,m:7,a:1917,d:"Terza Battaglia di Ypres inizia"},
+{g:31,m:7,a:1964,d:"Ranger 7 invia prime foto ravvicinate della Luna"},
+{g:1,m:8,a:1944,d:"Insurrezione di Varsavia"},
+{g:1,m:8,a:1714,d:"Giorgio I diventa re di Gran Bretagna"},
+{g:1,m:8,a:1927,d:"Ponte di Nanchang completato"},
+{g:2,m:8,a:-216,d:"Battaglia di Canne: Annibale distrugge esercito romano"},
+{g:2,m:8,a:1939,d:"Albert Einstein scrive lettera a Roosevelt (Progetto Manhattan)"},
+{g:2,m:8,a:1964,d:"Incidente del Golfo del Tonchino"},
+{g:3,m:8,a:1492,d:"Colombo salpa da Palos"},
+{g:3,m:8,a:1778,d:"Inaugurazione Teatro alla Scala"},
+{g:3,m:8,a:1958,d:"Sottomarino USS Nautilus passa sotto Polo Nord"},
+{g:4,m:8,a:1914,d:"Germania invade Belgio neutrale"},
+{g:4,m:8,a:1892,d:"Lizzie Borden accusata di omicidio"},
+{g:4,m:8,a:1693,d:"Champagne inventato da Dom Pérignon"},
+{g:5,m:8,a:1962,d:"Marilyn Monroe muore"},
+{g:5,m:8,a:1864,d:"Battaglia di Mobile Bay"},
+{g:5,m:8,a:1858,d:"Primo cavo telegrafico transatlantico completato"},
+{g:6,m:8,a:1945,d:"Bomba atomica su Hiroshima"},
+{g:6,m:8,a:1926,d:"Gertrude Ederle prima donna ad attraversare la Manica a nuoto"},
+{g:6,m:8,a:1661,d:"Portogallo e Spagna firmano Trattato di Lisbona"},
+{g:7,m:8,a:1960,d:"Costa d'Avorio indipendente"},
+{g:7,m:8,a:1942,d:"Battaglia di Guadalcanal inizia"},
+{g:7,m:8,a:1782,d:"George Washington istituisce Purple Heart"},
+{g:8,m:8,a:1974,d:"Nixon annuncia dimissioni"},
+{g:8,m:8,a:1786,d:"Prima scalata del Monte Bianco"},
+{g:8,m:8,a:1963,d:"Grande Rapina al Treno in Inghilterra"},
+{g:9,m:8,a:1945,d:"Bomba atomica su Nagasaki"},
+{g:9,m:8,a:1969,d:"Famiglia Manson uccide Sharon Tate"},
+{g:9,m:8,a:1854,d:"Thoreau pubblica Walden"},
+{g:10,m:8,a:1792,d:"Assalto alle Tuileries: fine monarchia francese"},
+{g:10,m:8,a:1675,d:"Fondazione del Royal Observatory Greenwich"},
+{g:10,m:8,a:1809,d:"Ecuador indipendente"},
+{g:11,m:8,a:1919,d:"Costituzione di Weimar entra in vigore"},
+{g:11,m:8,a:1942,d:"Hedy Lamarr brevetta frequency hopping"},
+{g:11,m:8,a:1999,d:"Eclissi solare totale in Europa"},
+{g:12,m:8,a:-30,d:"Cleopatra si suicida"},
+{g:12,m:8,a:1898,d:"Hawaii annesse dagli USA"},
+{g:12,m:8,a:1981,d:"IBM lancia il PC"},
+{g:13,m:8,a:1961,d:"Costruzione del Muro di Berlino"},
+{g:13,m:8,a:1521,d:"Cortés conquista Tenochtitlan"},
+{g:13,m:8,a:1704,d:"Battaglia di Blenheim"},
+{g:14,m:8,a:1947,d:"Pakistan indipendente"},
+{g:14,m:8,a:1945,d:"VJ Day: Giappone si arrende"},
+{g:14,m:8,a:1900,d:"Rivolta dei Boxer: Alleanza delle Otto Nazioni libera Pechino"},
+{g:15,m:8,a:1947,d:"India indipendente"},
+{g:15,m:8,a:1769,d:"Napoleone Bonaparte nasce"},
+{g:15,m:8,a:1971,d:"Nixon termina convertibilità dollaro-oro"},
+{g:16,m:8,a:1977,d:"Elvis Presley muore"},
+{g:16,m:8,a:1896,d:"Gold Rush nello Yukon inizia"},
+{g:16,m:8,a:1812,d:"Detroit si arrende agli inglesi"},
+{g:17,m:8,a:1945,d:"Indonesia proclama indipendenza"},
+{g:17,m:8,a:1877,d:"Asaph Hall scopre Phobos"},
+{g:17,m:8,a:1960,d:"Gabon indipendente"},
+{g:18,m:8,a:1227,d:"Gengis Khan muore"},
+{g:18,m:8,a:1920,d:"19° Emendamento: voto alle donne USA"},
+{g:18,m:8,a:1587,d:"Virginia Dare prima bambina inglese nata in America"},
+{g:19,m:8,a:14,d:"Augusto muore"},
+{g:19,m:8,a:1960,d:"U-2 pilot Gary Powers condannato"},
+{g:19,m:8,a:1991,d:"Colpo di stato contro Gorbačëv"},
+{g:20,m:8,a:1940,d:"Trotsky assassinato in Messico"},
+{g:20,m:8,a:1977,d:"Voyager 2 lanciato"},
+{g:20,m:8,a:1968,d:"Invasione sovietica della Cecoslovacchia"},
+{g:21,m:8,a:1944,d:"Conferenza di Dumbarton Oaks (fondazione ONU)"},
+{g:21,m:8,a:1911,d:"Mona Lisa rubata dal Louvre"},
+{g:21,m:8,a:1959,d:"Hawaii diventa 50° stato USA"},
+{g:22,m:8,a:1485,d:"Battaglia di Bosworth: fine Guerra Due Rose"},
+{g:22,m:8,a:1642,d:"Inizia Guerra Civile Inglese"},
+{g:22,m:8,a:1717,d:"Spagna conquista Sardegna"},
+{g:23,m:8,a:79,d:"Eruzione Vesuvio: Pompei distrutta"},
+{g:23,m:8,a:1939,d:"Patto Molotov-Ribbentrop"},
+{g:23,m:8,a:1927,d:"Sacco e Vanzetti giustiziati"},
+{g:24,m:8,a:410,d:"Visigoti saccheggiano Roma"},
+{g:24,m:8,a:1572,d:"Massacro di San Bartolomeo"},
+{g:24,m:8,a:1991,d:"Ucraina indipendente"},
+{g:25,m:8,a:1609,d:"Galileo presenta telescopio a Venezia"},
+{g:25,m:8,a:1825,d:"Uruguay indipendente"},
+{g:25,m:8,a:1944,d:"Liberazione di Parigi"},
+{g:26,m:8,a:1789,d:"Dichiarazione Diritti Uomo e Cittadino"},
+{g:26,m:8,a:55,d:"Britannia invasa da Giulio Cesare"},
+{g:26,m:8,a:1920,d:"19° Emendamento ratificato"},
+{g:27,m:8,a:1883,d:"Eruzione Krakatoa"},
+{g:27,m:8,a:1928,d:"Patto Kellogg-Briand"},
+{g:27,m:8,a:1939,d:"Primo volo di un jet (Heinkel He 178)"},
+{g:28,m:8,a:1963,d:"Marcia su Washington: I Have a Dream"},
+{g:28,m:8,a:1922,d:"Prima pubblicità radiofonica"},
+{g:28,m:8,a:1609,d:"Henry Hudson scopre la Baia del Delaware"},
+{g:29,m:8,a:1949,d:"Prima esplosione nucleare sovietica"},
+{g:29,m:8,a:1533,d:"L'ultimo imperatore Inca Atahualpa giustiziato"},
+{g:29,m:8,a:2005,d:"Uragano Katrina colpisce New Orleans"},
+{g:30,m:8,a:1918,d:"Attentato a Lenin"},
+{g:30,m:8,a:1797,d:"Mary Shelley nasce"},
+{g:30,m:8,a:1963,d:"Hotline Mosca-Washington istituita"},
+{g:31,m:8,a:1997,d:"Diana, Principessa del Galles, muore a Parigi"},
+{g:31,m:8,a:1888,d:"Jack lo Squartatore uccide la prima vittima"},
+{g:31,m:8,a:1907,d:"Inghilterra, Russia e Francia formano Triplice Intesa"},
+{g:1,m:9,a:1939,d:"Germania invade Polonia: inizio WWII"},
+{g:1,m:9,a:1715,d:"Luigi XIV muore"},
+{g:1,m:9,a:1985,d:"Relitto del Titanic scoperto"},
+{g:2,m:9,a:1945,d:"Ho Chi Minh proclama indipendenza Vietnam"},
+{g:2,m:9,a:1666,d:"Grande incendio di Londra inizia"},
+{g:2,m:9,a:31,d:"Battaglia di Azio"},
+{g:3,m:9,a:301,d:"San Marino indipendente (tradizionale)"},
+{g:3,m:9,a:1791,d:"Francia adotta Costituzione"},
+{g:3,m:9,a:1658,d:"Oliver Cromwell muore"},
+{g:4,m:9,a:476,d:"Caduta Impero Romano d'Occidente"},
+{g:4,m:9,a:1870,d:"Napoleone III deposto"},
+{g:4,m:9,a:1888,d:"George Eastman brevetta Kodak"},
+{g:5,m:9,a:1972,d:"Attacco terroristico Olimpiadi Monaco"},
+{g:5,m:9,a:1774,d:"Primo Congresso Continentale"},
+{g:5,m:9,a:1698,d:"Pietro il Grande tassa le barbe"},
+{g:6,m:9,a:1522,d:"Victoria completa primo giro del mondo"},
+{g:6,m:9,a:1620,d:"Mayflower salpa"},
+{g:6,m:9,a:1997,d:"Funerale Principessa Diana"},
+{g:7,m:9,a:1812,d:"Battaglia di Borodino"},
+{g:7,m:9,a:1822,d:"Brasile indipendente"},
+{g:7,m:9,a:1940,d:"Blitz di Londra inizia"},
+{g:8,m:9,a:1943,d:"Armistizio di Cassibile (Italia)"},
+{g:8,m:9,a:1504,d:"Michelangelo svela il David"},
+{g:8,m:9,a:1966,d:"Star Trek debutta"},
+{g:9,m:9,a:1976,d:"Mao Zedong muore"},
+{g:9,m:9,a:1850,d:"California diventa 31° stato"},
+{g:9,m:9,a:1087,d:"Guglielmo il Conquistatore muore"},
+{g:10,m:9,a:1898,d:"Elisabetta d'Austria assassinata"},
+{g:10,m:9,a:1846,d:"Elias Howe brevetta macchina da cucire"},
+{g:10,m:9,a:1608,d:"John Smith eletto presidente colonia Jamestown"},
+{g:11,m:9,a:2001,d:"Attacchi terroristici 11 settembre"},
+{g:11,m:9,a:1973,d:"Colpo di stato di Pinochet in Cile"},
+{g:11,m:9,a:1297,d:"Battaglia di Stirling Bridge"},
+{g:12,m:9,a:1683,d:"Battaglia di Vienna: sconfitta ottomana"},
+{g:12,m:9,a:1959,d:"Luna 2 raggiunge la Luna"},
+{g:12,m:9,a:1940,d:"Grotte di Lascaux scoperte"},
+{g:13,m:9,a:81,d:"Domiziano diventa imperatore"},
+{g:13,m:9,a:1788,d:"New York diventa capitale USA"},
+{g:13,m:9,a:1759,d:"Battaglia delle Piane di Abraham"},
+{g:14,m:9,a:1321,d:"Dante Alighieri muore"},
+{g:14,m:9,a:1812,d:"Napoleone entra a Mosca"},
+{g:14,m:9,a:1901,d:"Theodore Roosevelt diventa presidente"},
+{g:15,m:9,a:1821,d:"Costa Rica, Guatemala, Honduras, Nicaragua, El Salvador indipendenti"},
+{g:15,m:9,a:1835,d:"HMS Beagle arriva alle Galápagos"},
+{g:15,m:9,a:1916,d:"Primo uso dei carri armati (Somme)"},
+{g:16,m:9,a:1620,d:"Mayflower parte da Plymouth"},
+{g:16,m:9,a:1810,d:"Messico inizia rivolta per indipendenza"},
+{g:16,m:9,a:1975,d:"Papua Nuova Guinea indipendente"},
+{g:17,m:9,a:1787,d:"Costituzione USA firmata"},
+{g:17,m:9,a:1859,d:"Joshua A. Norton si autoproclaimed imperatore USA"},
+{g:17,m:9,a:1862,d:"Battaglia di Antietam"},
+{g:18,m:9,a:1931,d:"Incidente Mukden: Giappone invade Manciuria"},
+{g:18,m:9,a:1810,d:"Cile inizia processo indipendenza"},
+{g:18,m:9,a:1851,d:"New York Times prima pubblicazione"},
+{g:19,m:9,a:1356,d:"Battaglia di Poitiers"},
+{g:19,m:9,a:1783,d:"Fratelli Montgolfier lanciano prima mongolfiera con animali"},
+{g:19,m:9,a:1991,d:"Ötzi scoperto nelle Alpi"},
+{g:20,m:9,a:1870,d:"Presa di Porta Pia: Roma capitale"},
+{g:20,m:9,a:1519,d:"Magellano parte per circumnavigazione"},
+{g:20,m:9,a:1946,d:"Primo Festival di Cannes"},
+{g:21,m:9,a:1792,d:"Monarchia abolita in Francia"},
+{g:21,m:9,a:1937,d:"Lo Hobbit pubblicato"},
+{g:21,m:9,a:1897,d:"New York Sun pubblica 'Yes, Virginia...'"},
+{g:22,m:9,a:1862,d:"Lincoln annuncia Proclama Emancipazione"},
+{g:22,m:9,a:1980,d:"Guerra Iran-Iraq inizia"},
+{g:22,m:9,a:1776,d:"Nathan Hale giustiziato come spia"},
+{g:23,m:9,a:1846,d:"Nettuno scoperto"},
+{g:23,m:9,a:1779,d:"John Paul Jones: 'Non ho ancora iniziato a combattere'"},
+{g:23,m:9,a:63,d:"Augusto diventa imperatore"},
+{g:24,m:9,a:622,d:"Egira: Maometto lascia Mecca"},
+{g:24,m:9,a:1789,d:"Supreme Court istituita"},
+{g:24,m:9,a:1664,d:"Nuova Amsterdam diventa New York"},
+{g:25,m:9,a:1513,d:"Balboa scopre Oceano Pacifico"},
+{g:25,m:9,a:1890,d:"Parco Yosemite istituito"},
+{g:25,m:9,a:1957,d:"Integrazione Little Rock Nine"},
+{g:26,m:9,a:1580,d:"Francis Drake completa circumnavigazione"},
+{g:26,m:9,a:1960,d:"Primo dibattito televisivo Kennedy-Nixon"},
+{g:26,m:9,a:1907,d:"Nuova Zelanda diventa dominion"},
+{g:27,m:9,a:1821,d:"Messico indipendente"},
+{g:27,m:9,a:1854,d:"Arctic affonda (351 morti)"},
+{g:27,m:9,a:1940,d:"Patto Tripartito (Asse Roma-Berlino-Tokyo)"},
+{g:28,m:9,a:1066,d:"Guglielmo Conquistatore invade Inghilterra"},
+{g:28,m:9,a:48,d:"Pompeo Magno assassinato"},
+{g:28,m:9,a:1928,d:"Alexander Fleming scopre penicillina"},
+{g:29,m:9,a:1364,d:"Battaglia di Auray"},
+{g:29,m:9,a:1789,d:"War Department USA istituito"},
+{g:29,m:9,a:1918,d:"Bulgaria firma armistizio"},
+{g:30,m:9,a:1938,d:"Accordi Monaco: Sudeti alla Germania"},
+{g:30,m:9,a:1955,d:"James Dean muore in incidente"},
+{g:30,m:9,a:1399,d:"Enrico IV depone Riccardo II"},
+{g:1,m:10,a:1949,d:"Mao proclama Repubblica Popolare Cinese"},
+{g:1,m:10,a:1890,d:"Parco Yosemite istituito"},
+{g:1,m:10,a:331,d:"Alessandro Magno sconfigge Dario III a Gaugamela"},
+{g:2,m:10,a:1187,d:"Saladino conquista Gerusalemme"},
+{g:2,m:10,a:1889,d:"Conferenza Panamericana"},
+{g:2,m:10,a:1950,d:"Peanuts comic strip debutta"},
+{g:3,m:10,a:1990,d:"Riunificazione Germania"},
+{g:3,m:10,a:1952,d:"Regno Unito testa prima bomba atomica"},
+{g:3,m:10,a:42,d:"Battaglia Filippi"},
+{g:4,m:10,a:1582,d:"Calendario gregoriano adottato"},
+{g:4,m:10,a:1957,d:"Sputnik 1 lanciato"},
+{g:4,m:10,a:1883,d:"Orient Express prima corsa"},
+{g:5,m:10,a:1962,d:"Dr. No (primo film Bond) premiere"},
+{g:5,m:10,a:1789,d:"Donne marciano su Versailles"},
+{g:5,m:10,a:1813,d:"Tecumseh ucciso"},
+{g:6,m:10,a:1973,d:"Guerra Yom Kippur"},
+{g:6,m:10,a:1927,d:"Il cantante di jazz (primo film sonoro)"},
+{g:6,m:10,a:1889,d:"Moulin Rouge apre"},
+{g:7,m:10,a:1571,d:"Battaglia Lepanto: cristiani vs ottomani"},
+{g:7,m:10,a:1985,d:"Achille Lauro dirottata"},
+{g:7,m:10,a:1949,d:"RDA (Germania Est) fondata"},
+{g:8,m:10,a:1967,d:"Che Guevara catturato"},
+{g:8,m:10,a:1871,d:"Grande incendio Chicago"},
+{g:8,m:10,a:1918,d:"Sergente York cattura 132 tedeschi"},
+{g:9,m:10,a:1962,d:"Uganda indipendente"},
+{g:9,m:10,a:1967,d:"Che Guevara giustiziato"},
+{g:9,m:10,a:1635,d:"Roger Williams esiliato da Massachusetts"},
+{g:10,m:10,a:732,d:"Battaglia Poitiers: Carlo Martello ferma musulmani"},
+{g:10,m:10,a:1913,d:"Canale Panama inaugurato (fase test)"},
+{g:10,m:10,a:1970,d:"Fiji indipendente"},
+{g:11,m:10,a:1962,d:"Concilio Vaticano II apre"},
+{g:11,m:10,a:1906,d:"Scuola San Francisco segregazione asiatici"},
+{g:11,m:10,a:1899,d:"Guerra Boera inizia"},
+{g:12,m:10,a:1492,d:"Colombo arriva America"},
+{g:12,m:10,a:1968,d:"Guinea Equatoriale indipendente"},
+{g:12,m:10,a:1964,d:"URSS lancia Voskhod 1 (3 cosmonauti)"},
+{g:13,m:10,a:54,d:"Nerone imperatore"},
+{g:13,m:10,a:1792,d:"Pietra angolare Casa Bianca posta"},
+{g:13,m:10,a:1307,d:"Templari arrestati"},
+{g:14,m:10,a:1066,d:"Battaglia Hastings: Guglielmo conquista Inghilterra"},
+{g:14,m:10,a:1947,d:"Chuck Yeager rompe barriera suono"},
+{g:14,m:10,a:1964,d:"Martin Luther King Nobel Pace"},
+{g:15,m:10,a:1582,d:"Calendario gregoriano adottato"},
+{g:15,m:10,a:1917,d:"Mata Hari giustiziata"},
+{g:15,m:10,a:1987,d:"Thomas Sankara assassinato"},
+{g:16,m:10,a:1793,d:"Maria Antonietta ghigliottinata"},
+{g:16,m:10,a:1978,d:"Papa Giovanni Paolo II eletto"},
+{g:16,m:10,a:1859,d:"John Brown raid Harper's Ferry"},
+{g:17,m:10,a:1931,d:"Al Capone condannato"},
+{g:17,m:10,a:1777,d:"Saratoga: Burgoyne si arrende"},
+{g:17,m:10,a:1989,d:"Terremoto Loma Prieta San Francisco"},
+{g:18,m:10,a:1867,d:"Alaska acquistata"},
+{g:18,m:10,a:1898,d:"USA annette Porto Rico"},
+{g:18,m:10,a:1685,d:"Editto Fontainebleau revoca Editto Nantes"},
+{g:19,m:10,a:-202,d:"Battaglia Zama: Scipione batte Annibale"},
+{g:19,m:10,a:1781,d:"Cornwallis si arrende Yorktown"},
+{g:19,m:10,a:1987,d:"Lunedì Nero (crollo borsa)"},
+{g:20,m:10,a:1944,d:"MacArthur ritorna Filippine"},
+{g:20,m:10,a:1803,d:"Senato USA ratifica Louisiana Purchase"},
+{g:20,m:10,a:1968,d:"Jacqueline Kennedy sposa Onassis"},
+{g:21,m:10,a:1805,d:"Battaglia Trafalgar: Nelson vince"},
+{g:21,m:10,a:1879,d:"Edison testa lampadina"},
+{g:21,m:10,a:1520,d:"Magellano scopre Stretto"},
+{g:22,m:10,a:1962,d:"Kennedy annuncia blocco Cuba"},
+{g:22,m:10,a:1797,d:"Primo paracadutista (André-Jacques Garnerin)"},
+{g:22,m:10,a:4004,d:"Creazione mondo secondo Arcivescovo Ussher"},
+{g:23,m:10,a:-42,d:"Battaglia Filippi: Antonio e Ottaviano"},
+{g:23,m:10,a:1956,d:"Rivolta ungherese"},
+{g:23,m:10,a:1915,d:"25,000 donne marciano NYC per suffragio"},
+{g:24,m:10,a:1945,d:"ONU nasce"},
+{g:24,m:10,a:1929,d:"Giovedì Nero (crollo borsa)"},
+{g:24,m:10,a:1648,d:"Pace Vestfalia: fine Guerra 30 anni"},
+{g:25,m:10,a:1415,d:"Battaglia Agincourt"},
+{g:25,m:10,a:1854,d:"Battaglia Balaclava (Carica Brigata Leggera)"},
+{g:25,m:10,a:1983,d:"USA invade Grenada"},
+{g:26,m:10,a:1881,d:"Sparatoria OK Corral"},
+{g:26,m:10,a:1863,d:"Croce Rossa Internazionale fondata"},
+{g:26,m:10,a:1979,d:"Park Chung-hee assassinato"},
+{g:27,m:10,a:1962,d:"Crisi Cuba apice"},
+{g:27,m:10,a:1904,d:"Metropolitana NYC apre"},
+{g:27,m:10,a:312,d:"Battaglia Ponte Milvio"},
+{g:28,m:10,a:312,d:"Costantino sconfigge Massenzio"},
+{g:28,m:10,a:1886,d:"Statua Libertà inaugurata"},
+{g:28,m:10,a:1492,d:"Colombo arriva Cuba"},
+{g:29,m:10,a:1929,d:"Martedì Nero (crollo Wall Street)"},
+{g:29,m:10,a:1923,d:"Turchia diventa repubblica"},
+{g:29,m:10,a:1618,d:"Walter Raleigh decapitato"},
+{g:30,m:10,a:1938,d:"Guerra Mondi Orson Welles"},
+{g:30,m:10,a:1485,d:"Riccardo III incoronato"},
+{g:30,m:10,a:1974,d:"Ali batte Foreman (Rumble Jungle)"},
+{g:31,m:10,a:1517,d:"Lutero 95 Tesi: Riforma"},
+{g:31,m:10,a:1984,d:"Indira Gandhi assassinata"},
+{g:31,m:10,a:1922,d:"Marcia su Roma: Mussolini"},
+{g:1,m:11,a:1755,d:"Terremoto Lisbona"},
+{g:1,m:11,a:1512,d:"Cappella Sistina aperta"},
+{g:1,m:11,a:1800,d:"John Adams prima notte Casa Bianca"},
+{g:2,m:11,a:1947,d:"Spruce Goose vola"},
+{g:2,m:11,a:1960,d:"Penguin Books assolto (Lady Chatterley)"},
+{g:2,m:11,a:1889,d:"Nord e Sud Dakota stati USA"},
+{g:3,m:11,a:1957,d:"Laika nello spazio"},
+{g:3,m:11,a:1903,d:"Panama indipendente"},
+{g:3,m:11,a:644,d:"Omar assassinato"},
+{g:4,m:11,a:1922,d:"Tomba Tutankhamon scoperta"},
+{g:4,m:11,a:1979,d:"Ambasciata USA Teheran occupata"},
+{g:4,m:11,a:1576,d:"Eighty Years' War: Sacco Anversa"},
+{g:5,m:11,a:1605,d:"Congiura Polveri scoperta"},
+{g:5,m:11,a:1688,d:"Guglielmo III sbarca Inghilterra"},
+{g:5,m:11,a:1872,d:"Susan B. Anthony arrestata (voto)"},
+{g:6,m:11,a:1860,d:"Lincoln eletto presidente"},
+{g:6,m:11,a:1528,d:"Pizarro conquista Inca"},
+{g:6,m:11,a:1917,d:"Battaglia Passchendaele finisce"},
+{g:7,m:11,a:1917,d:"Rivoluzione Ottobre"},
+{g:7,m:11,a:1940,d:"Tacoma Narrows Bridge collassa"},
+{g:7,m:11,a:1631,d:"Battaglia Breitenfeld"},
+{g:8,m:11,a:392,d:"Teodosio vieta culti pagani"},
+{g:8,m:11,a:1895,d:"Röntgen scopre raggi X"},
+{g:8,m:11,a:1923,d:"Beer Hall Putsch Monaco"},
+{g:9,m:11,a:1989,d:"Muro Berlino cade"},
+{g:9,m:11,a:1938,d:"Kristallnacht"},
+{g:9,m:11,a:1799,d:"Napoleone colpo stato 18 Brumaio"},
+{g:10,m:11,a:1483,d:"Lutero nasce"},
+{g:10,m:11,a:1969,d:"Sesame Street debutta"},
+{g:10,m:11,a:1775,d:"US Marines fondati"},
+{g:11,m:11,a:1918,d:"Armistizio WWI"},
+{g:11,m:11,a:1620,d:"Patto Mayflower firmato"},
+{g:11,m:11,a:1887,d:"Haymarket Martyrs impiccati"},
+{g:12,m:11,a:1954,d:"Ellis Island chiude"},
+{g:12,m:11,a:1927,d:"Trotsky espulso partito"},
+{g:12,m:11,a:1847,d:"Cloroformio usato come anestetico"},
+{g:13,m:11,a:1985,d:"Eruzione Nevado Ruiz Colombia"},
+{g:13,m:11,a:1927,d:"Holland Tunnel NYC apre"},
+{g:13,m:11,a:1002,d:"Massacro San Brizio"},
+{g:14,m:11,a:1889,d:"Nellie Bly giro mondo 72 giorni"},
+{g:14,m:11,a:1922,d:"BBC inizia trasmissioni"},
+{g:14,m:11,a:1851,d:"Moby-Dick pubblicato"},
+{g:15,m:11,a:1315,d:"Battaglia Morgarten"},
+{g:15,m:11,a:1777,d:"Articles Confederation adottati"},
+{g:15,m:11,a:1887,d:"Prima Esperanto pubblicata"},
+{g:16,m:11,a:1632,d:"Battaglia Lützen: Gustavo Adolfo muore"},
+{g:16,m:11,a:1933,d:"USA riconosce URSS"},
+{g:16,m:11,a:1272,d:"Enrico III Inghilterra muore"},
+{g:17,m:11,a:1869,d:"Canale Suez apre"},
+{g:17,m:11,a:1558,d:"Elisabetta I diventa regina"},
+{g:17,m:11,a:1970,d:"Soviet Lunokhod 1 Luna"},
+{g:18,m:11,a:1928,d:"Topolino Steamboat Willie"},
+{g:18,m:11,a:1626,d:"San Pietro consacrata"},
+{g:18,m:11,a:1307,d:"Guglielmo Tell leggenda"},
+{g:19,m:11,a:1863,d:"Discorso Gettysburg Lincoln"},
+{g:19,m:11,a:1703,d:"Uomo maschera ferro muore"},
+{g:19,m:11,a:1942,d:"Operazione Urano Stalingrado"},
+{g:20,m:11,a:1945,d:"Processo Norimberga"},
+{g:20,m:11,a:1947,d:"Matrimonio Elisabetta II"},
+{g:20,m:11,a:1910,d:"Rivoluzione Messicana"},
+{g:21,m:11,a:1783,d:"Primo volo mongolfiera umani"},
+{g:21,m:11,a:1877,d:"Edison annuncia fonografo"},
+{g:21,m:11,a:1974,d:"Birmingham pub bombing"},
+{g:22,m:11,a:1963,d:"JFK assassinato Dallas"},
+{g:22,m:11,a:1718,d:"Barbanera ucciso"},
+{g:22,m:11,a:1497,d:"Vasco da Gama doppia Capo Buona Speranza"},
+{g:23,m:11,a:1407,d:"Luigi Orleans assassinato"},
+{g:23,m:11,a:1890,d:"Jukebox installato"},
+{g:23,m:11,a:1936,d:"Life Magazine prima edizione"},
+{g:24,m:11,a:1859,d:"Origine Specie pubblicato"},
+{g:24,m:11,a:1963,d:"Lee Harvey Oswald ucciso"},
+{g:24,m:11,a:1642,d:"Tasman scopre Tasmania"},
+{g:25,m:11,a:1947,d:"Hollywood Ten lista nera"},
+{g:25,m:11,a:1867,d:"Nobel brevetta dinamite"},
+{g:25,m:11,a:1952,d:"Trappola topi premiere Londra"},
+{g:26,m:11,a:1922,d:"Tomba Tutankhamon aperta"},
+{g:26,m:11,a:1789,d:"Primo Giorno Ringraziamento USA"},
+{g:26,m:11,a:43,d:"Tiberio nasce"},
+{g:27,m:11,a:1095,d:"Papa Urbano II Prima Crociata"},
+{g:27,m:11,a:1942,d:"Flotta francese affondata Tolone"},
+{g:27,m:11,a:1701,d:"Anders Celsius nasce"},
+{g:28,m:11,a:1520,d:"Magellano Pacifico"},
+{g:28,m:11,a:1943,d:"Teheran Conference"},
+{g:28,m:11,a:1660,d:"Royal Society fondata"},
+{g:29,m:11,a:1947,d:"ONU partizione Palestina"},
+{g:29,m:11,a:1929,d:"Byrd sorvola Polo Sud"},
+{g:29,m:11,a:1890,d:"Prima partita Army-Navy"},
+{g:30,m:11,a:1782,d:"Trattato Parigi preliminare USA"},
+{g:30,m:11,a:1936,d:"Crystal Palace brucia"},
+{g:30,m:11,a:1939,d:"URSS invade Finlandia"},
+{g:1,m:12,a:1955,d:"Rosa Parks rifiuta cedere posto"},
+{g:1,m:12,a:1640,d:"Portogallo indipendente"},
+{g:1,m:12,a:1774,d:"Primo abolizionismo Pennsylvania"},
+{g:2,m:12,a:1804,d:"Napoleone imperatore"},
+{g:2,m:12,a:1823,d:"Monroe Doctrine"},
+{g:2,m:12,a:1942,d:"Reattore nucleare Chicago"},
+{g:3,m:12,a:1967,d:"Primo trapianto cuore"},
+{g:3,m:12,a:1818,d:"Illinois 21° stato"},
+{g:3,m:12,a:1854,d:"Battaglia Eureka Stockade"},
+{g:4,m:12,a:1872,d:"Mary Celeste trovata"},
+{g:4,m:12,a:1674,d:"Padre Marquette fonda Chicago"},
+{g:4,m:12,a:1791,d:"Observer prima edizione"},
+{g:5,m:12,a:1933,d:"Proibizionismo finisce USA"},
+{g:5,m:12,a:1945,d:"Volo 19 scompare Bermuda"},
+{g:5,m:12,a:1484,d:"Papa Innocenzo VIII pubblica Summis desiderantes"},
+{g:6,m:12,a:1865,d:"13° Emendamento ratificato"},
+{g:6,m:12,a:1917,d:"Finlandia indipendente"},
+{g:6,m:12,a:1877,d:"Edison fonografo"},
+{g:7,m:12,a:1941,d:"Pearl Harbor"},
+{g:7,m:12,a:1732,d:"Royal Opera House apre"},
+{g:7,m:12,a:1787,d:"Delaware primo stato"},
+{g:8,m:12,a:1980,d:"John Lennon assassinato"},
+{g:8,m:12,a:1854,d:"Papa Pio IX Immacolata Concezione"},
+{g:8,m:12,a:1987,d:"Trattato INF firmato"},
+{g:9,m:12,a:1905,d:"Separazione Chiesa-Stato Francia"},
+{g:9,m:12,a:1960,d:"Coronation Street debutta"},
+{g:9,m:12,a:1868,d:"Prima convenzione Croce Rossa"},
+{g:10,m:12,a:1948,d:"Dichiarazione Diritti Umani"},
+{g:10,m:12,a:1520,d:"Lutero brucia bolla papale"},
+{g:10,m:12,a:1817,d:"Mississippi 20° stato"},
+{g:11,m:12,a:1946,d:"UNICEF fondato"},
+{g:11,m:12,a:1936,d:"Edoardo VIII abdica"},
+{g:11,m:12,a:1620,d:"Mayflower Plymouth"},
+{g:12,m:12,a:1901,d:"Marconi segnale radio transatlantico"},
+{g:12,m:12,a:1913,d:"Mona Lisa ritrovata"},
+{g:12,m:12,a:1963,d:"Kenya indipendente"},
+{g:13,m:12,a:1577,d:"Drake circumnavigazione"},
+{g:13,m:12,a:1642,d:"Tasman Nuova Zelanda"},
+{g:13,m:12,a:1294,d:"San Celestino V abdica"},
+{g:14,m:12,a:1911,d:"Amundsen Polo Sud"},
+{g:14,m:12,a:1799,d:"George Washington muore"},
+{g:14,m:12,a:1918,d:"Donne votano UK"},
+{g:15,m:12,a:1961,d:"Eichmann condanna morte"},
+{g:15,m:12,a:1791,d:"Bill Rights ratificato"},
+{g:15,m:12,a:1890,d:"Sitting Bull ucciso"},
+{g:16,m:12,a:1773,d:"Boston Tea Party"},
+{g:16,m:12,a:1944,d:"Battaglia Bulge"},
+{g:16,m:12,a:1653,d:"Cromwell Lord Protector"},
+{g:17,m:12,a:1903,d:"Fratelli Wright primo volo"},
+{g:17,m:12,a:1989,d:"Simpson debutta"},
+{g:17,m:12,a:1398,d:"Tamerlano saccheggia Delhi"},
+{g:18,m:12,a:1865,d:"13° Emendamento abolisce schiavitù"},
+{g:18,m:12,a:1912,d:"Uomo Piltdown 'scoperto'"},
+{g:18,m:12,a:1642,d:"Isaac Newton nasce (calendario giuliano)"},
+{g:19,m:12,a:1984,d:"Accordo Hong Kong"},
+{g:19,m:12,a:1843,d:"Canto Natale pubblicato"},
+{g:19,m:12,a:1777,d:"Valley Forge inverno"},
+{g:20,m:12,a:1989,d:"USA invade Panama"},
+{g:20,m:12,a:1803,d:"Louisiana Purchase completato"},
+{g:20,m:12,a:1860,d:"Carolina Sud secessione"},
+{g:21,m:12,a:1988,d:"Lockerbie"},
+{g:21,m:12,a:1968,d:"Apollo 8 Luna"},
+{g:21,m:12,a:1913,d:"Cruciverba pubblicato"},
+{g:22,m:12,a:1849,d:"Dostoevskij graziato"},
+{g:22,m:12,a:1894,d:"Caso Dreyfus"},
+{g:22,m:12,a:1808,d:"Beethoven Quinta Sinfonia premiere"},
+{g:23,m:12,a:1913,d:"Federal Reserve"},
+{g:23,m:12,a:1888,d:"Van Gogh orecchio"},
+{g:23,m:12,a:1672,d:"Giovanni Cassini scopre Rea"},
+{g:24,m:12,a:1914,d:"Tregua Natale WWI"},
+{g:24,m:12,a:1818,d:"Stille Nacht eseguita"},
+{g:24,m:12,a:1871,d:"Aida premiere Cairo"},
+{g:25,m:12,a:800,d:"Carlo Magno imperatore"},
+{g:25,m:12,a:1066,d:"Guglielmo Conquistatore incoronato"},
+{g:25,m:12,a:1991,d:"URSS si dissolve"},
+{g:26,m:12,a:1898,d:"Curie radio"},
+{g:26,m:12,a:1991,d:"URSS cessa esistere"},
+{g:26,m:12,a:1862,d:"Sioux impiccati Minnesota"},
+{g:27,m:12,a:1831,d:"Darwin Beagle"},
+{g:27,m:12,a:537,d:"Santa Sofia consacrata"},
+{g:27,m:12,a:1932,d:"Radio City Music Hall apre"},
+{g:28,m:12,a:1895,d:"Fratelli Lumière prima proiezione"},
+{g:28,m:12,a:1612,d:"Nettuno osservato Galileo"},
+{g:28,m:12,a:1846,d:"Iowa 29° stato"},
+{g:29,m:12,a:1170,d:"Becket assassinato"},
+{g:29,m:12,a:1890,d:"Wounded Knee"},
+{g:29,m:12,a:1845,d:"Texas 28° stato"},
+{g:30,m:12,a:1922,d:"URSS nasce"},
+{g:30,m:12,a:1853,d:"Gadsden Purchase"},
+{g:30,m:12,a:1460,d:"Battaglia Wakefield"},
+{g:31,m:12,a:1999,d:"Yeltsin dimissioni"},
+{g:31,m:12,a:1695,d:"Tassa finestre Inghilterra"},
+{g:31,m:12,a:406,d:"Vandali Reno"},
+];
+ 
+function pad2(n) { return n < 10 ? '0'+n : ''+n; }
+
+function formatAnno(a) {
+  if (a < 0) return { y: String(-a), era: 'a.C.' };
+  return { y: String(a), era: 'd.C.' };
+}
+
+function renderEventList(container, giorno, mese) {
+  const results = EVENTI.filter(e => e.g === giorno && e.m === mese);
+  if (results.length === 0) {
+    container.innerHTML = '<div class="empty-state">Nessun evento registrato per questa data nel database.</div>';
+    return;
+  }
+  results.sort((a,b) => a.a - b.a);
+  container.innerHTML = results.map(e => {
+    const {y, era} = formatAnno(e.a);
+    const keywords = extractKeywords(e.d);
+    return `<div class="event-card clickable" onclick="openDeepDive(${e.a}, '${escapeHtml(e.d)}', '${keywords}')">
+      <div class="event-year">${y}<span class="era">${era}</span></div>
+      <div class="event-desc">${e.d}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── EXTRACT KEYWORDS FROM DESCRIPTION ──
+function extractKeywords(desc) {
+  // Remove common Italian words and keep potential proper nouns / key terms
+  const stopWords = ['la','le','lo','il','i','un','una','uno','di','da','in','con','su','per','del','della','dello','delle','dei','degli','al','alla','allo','alle','ai','agli','nel','nella','nello','nelle','nei','negli','sul','sulla','sullo','sulle','sui','sugli','che','e','o','ma','se','perché','come','quando','dove','cosa','chi','questo','questa','questi','queste','quello','quella','quelli','quelle','tutto','tutta','tutti','tutte','molto','poco','tanto','ogni','alcuni','alcune','primo','prima','primi','prime','secondo','seconda','secondi','seconde','nuovo','nuova','nuovi','nuove','vecchio','vecchia','vecchi','vecchie','grande','grandi','piccolo','piccola','piccoli','piccole','stesso','stessa','stessi','stesse','altro','altra','altri','altre'];
+  const clean = desc.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+  const words = clean.split(' ').filter(w => w.length > 3 && !stopWords.includes(w.toLowerCase()));
+  return encodeURIComponent(words.slice(0, 4).join(' '));
+}
+
+function escapeHtml(text) {
+  return text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+// ── DEEP DIVE MODAL FUNCTIONS ──
+async function openDeepDive(year, description, keywords) {
+  const modal = document.getElementById('modal-overlay');
+  const body = document.getElementById('modal-body');
+  const title = document.getElementById('modal-title');
+  
+  title.textContent = `Anno ${year}`;
+  body.innerHTML = '<div class="modal-loading">Caricamento approfondimento da Wikipedia...</div>';
+  modal.classList.add('visible');
+  document.body.style.overflow = 'hidden';
+  
+  try {
+    const decodedKeywords = decodeURIComponent(keywords);
+    const searchQuery = `${decodedKeywords} ${year}`;
+    
+    // Search Wikipedia for relevant article
+    const searchUrl = `https://it.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchQuery)}&format=json&origin=*`;
+    const searchRes = await fetch(searchUrl);
+    const searchData = await searchRes.json();
+    
+    if (!searchData.query.search || searchData.query.search.length === 0) {
+      body.innerHTML = `
+        <span class="modal-year-badge">${year}</span>
+        <p class="modal-event-desc">${description}</p>
+        <h4 class="modal-section-title">Nessun approfondimento trovato</h4>
+        <p class="modal-wiki-summary">Non è stato possibile trovare un articolo di Wikipedia correlato a questo evento. Prova a cercare manualmente su Wikipedia.</p>
+        <div class="modal-wiki-source">
+          <a href="https://it.wikipedia.org/w/index.php?search=${encodeURIComponent(searchQuery)}" target="_blank">Cerca su Wikipedia →</a>
+        </div>
+      `;
+      return;
+    }
+    
+    const pageTitle = searchData.query.search[0].title;
+    
+    // Get page summary and image
+    const pageUrl = `https://it.wikipedia.org/w/api.php?action=query&prop=extracts|pageimages&exintro=true&explaintext=true&pithumbsize=600&titles=${encodeURIComponent(pageTitle)}&format=json&origin=*`;
+    const pageRes = await fetch(pageUrl);
+    const pageData = await pageRes.json();
+    
+    const pages = pageData.query.pages;
+    const pageId = Object.keys(pages)[0];
+    const page = pages[pageId];
+    
+    let htmlContent = `
+      <span class="modal-year-badge">${year}</span>
+      <p class="modal-event-desc">${description}</p>
+      <h4 class="modal-section-title">${pageTitle}</h4>
+    `;
+    
+    if (page.extract) {
+      const extract = page.extract.substring(0, 800);
+      htmlContent += `<p class="modal-wiki-summary">${extract}${page.extract.length > 800 ? '...' : ''}</p>`;
+    }
+    
+    if (page.thumbnail && page.thumbnail.source) {
+      htmlContent += `<img src="${page.thumbnail.source}" alt="${pageTitle}" class="modal-wiki-image">`;
+    }
+    
+    htmlContent += `
+      <div class="modal-wiki-source">
+        Fonte: <a href="https://it.wikipedia.org/wiki/${encodeURIComponent(pageTitle)}" target="_blank">${pageTitle} - Wikipedia ↗</a>
+      </div>
+    `;
+    
+    body.innerHTML = htmlContent;
+    
+  } catch (err) {
+    console.error('Errore nel caricamento:', err);
+    body.innerHTML = `
+      <span class="modal-year-badge">${year}</span>
+      <p class="modal-event-desc">${description}</p>
+      <h4 class="modal-section-title">Errore di caricamento</h4>
+      <p class="modal-wiki-summary">Si è verificato un errore durante il caricamento dell'approfondimento. Riprova più tardi.</p>
+    `;
+  }
+}
+
+function closeModal(event) {
+  if (event.target.id === 'modal-overlay') {
+    closeModalBtn();
+  }
+}
+
+function closeModalBtn() {
+  const modal = document.getElementById('modal-overlay');
+  modal.classList.remove('visible');
+  document.body.style.overflow = '';
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeModalBtn();
+  }
+});
+
+// ── CLOCK ──
+function updateClock() {
+  const now = new Date();
+  const g = GIORNI_SETT[now.getDay()];
+  const d = now.getDate();
+  const m = MESI[now.getMonth()];
+  const y = now.getFullYear();
+  document.getElementById('today-label').textContent = `${g}, ${d} ${m} ${y}`;
+  document.getElementById('clock-display').textContent =
+    `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── OGGI PANEL ──
+(function initOggi() {
+  const now = new Date();
+  const g = now.getDate(), m = now.getMonth()+1;
+  document.getElementById('oggi-date-label').textContent =
+    `${g} ${MESI[m-1]}`;
+  renderEventList(document.getElementById('event-list-oggi'), g, m);
+})();
+
+// ── CERCA PANEL ──
+function cercaData() {
+  const g = parseInt(document.getElementById('input-giorno').value);
+  const m = parseInt(document.getElementById('input-mese').value);
+  const header = document.getElementById('cerca-header');
+  header.style.display = 'flex';
+  document.getElementById('cerca-date-label').textContent = `${g} ${MESI[m-1]}`;
+  renderEventList(document.getElementById('event-list-cerca'), g, m);
+}
+
+// ── QUIZ ──
+let quizState = { event: null, answered: false };
+// ── PLAYER DATA STORAGE ──
+const STORAGE_KEY = 'almanacco_player_v1';
+
+let playerData = {
+  nome: 'Anonimo',
+  partite: 0,
+  totale: 0,
+  best: 0,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+};
+
+function caricaDati() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      playerData = { ...playerData, ...parsed };
+    }
+  } catch (e) {
+    console.warn('Dati corrotti, ripristino default', e);
+  }
+  syncStatsFromPlayer();
+  aggiornaProfilo();
+}
+
+function salvaDati() {
+  playerData.updatedAt = new Date().toISOString();
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(playerData));
+  } catch (e) {
+    toast('Errore salvataggio: spazio esaurito');
+  }
+}
+
+function syncStatsFromPlayer() {
+  quizStats.partite = playerData.partite;
+  quizStats.totale = playerData.totale;
+  quizStats.best = playerData.best;
+  document.getElementById('stat-partite').textContent = quizStats.partite;
+  document.getElementById('stat-score-tot').textContent = quizStats.totale.toLocaleString('it-IT');
+  document.getElementById('stat-media').textContent =
+    quizStats.partite ? Math.round(quizStats.totale / quizStats.partite) : '—';
+  document.getElementById('stat-best').textContent = quizStats.best || '—';
+}
+
+function aggiornaProfilo() {
+  document.getElementById('profilo-name-label').textContent = playerData.nome;
+  const inp = document.getElementById('input-nome');
+  if (inp) inp.value = playerData.nome;
+  document.getElementById('prof-partite').textContent = playerData.partite;
+  document.getElementById('prof-totale').textContent = playerData.totale.toLocaleString('it-IT');
+  document.getElementById('prof-media').textContent =
+    playerData.partite ? Math.round(playerData.totale / playerData.partite) : '—';
+  document.getElementById('prof-best').textContent = playerData.best || '—';
+}
+
+function salvaNome() {
+  const v = document.getElementById('input-nome').value.trim();
+  if (!v) { toast('Il nome non può essere vuoto'); return; }
+  playerData.nome = v;
+  salvaDati();
+  aggiornaProfilo();
+  toast('Nome salvato');
+}
+
+function esportaDati() {
+  const blob = new Blob([JSON.stringify(playerData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `almanacco_${playerData.nome.replace(/\s+/g,'_')}_${Date.now()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('Dati esportati');
+}
+
+function importaDati(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (typeof data.partite !== 'number' || typeof data.totale !== 'number') {
+        toast('File non valido'); return;
+      }
+      playerData = {
+        nome: data.nome || 'Anonimo',
+        partite: data.partite || 0,
+        totale: data.totale || 0,
+        best: data.best || 0,
+        createdAt: data.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      salvaDati();
+      syncStatsFromPlayer();
+      aggiornaProfilo();
+      toast('Dati importati');
+    } catch (err) {
+      toast('Errore lettura file');
+    }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
+}
+
+function resetDati() {
+  if (!confirm('Sei sicuro di voler azzerare tutti i dati?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  playerData = {
+    nome: 'Anonimo', partite: 0, totale: 0, best: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  syncStatsFromPlayer();
+  aggiornaProfilo();
+  toast('Dati azzerati');
+}
+
+// minimal toast
+function toast(msg) {
+  let t = document.getElementById('__toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = '__toast';
+    t.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--parchment);padding:0.6rem 1.2rem;border-radius:2px;font-family:Playfair Display,serif;font-size:0.9rem;z-index:999;opacity:0;transition:opacity 0.3s;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.style.opacity = '0', 2200);
+}
+
+let quizStats = { partite: 0, totale: 0, best: 0 };
+
+function newQuiz() {
+  quizState.answered = false;
+  document.getElementById('quiz-result').classList.remove('visible');
+  document.getElementById('quiz-answer').value = '';
+  document.getElementById('score-bar').style.width = '0%';
+
+  const idx = Math.floor(Math.random() * EVENTI.length);
+  quizState.event = EVENTI[idx];
+  const e = quizState.event;
+
+  document.getElementById('quiz-date-badge').textContent =
+    `${e.g} ${MESI[e.m-1]}`;
+  document.getElementById('quiz-question').textContent = e.d;
+  document.getElementById('quiz-hint').textContent =
+    e.a < 0 ? 'Usa numeri negativi per gli anni a.C. (es. -44)' : '';
+  document.getElementById('quiz-answer').focus();
+}
+
+function calcolaPunteggio(scarto) {
+  if (scarto === 0) return 5000;
+  // 10 anni di scarto = 1000 punti persi, quindi 100 punti per anno
+  // Con 50 anni di scarto si arriva a 0 punti
+  if (scarto >= 50) return 0;
+  return 5000 - (scarto * 100);
+}
+
+function submitQuiz() {
+  if (quizState.answered || !quizState.event) return;
+  const val = parseInt(document.getElementById('quiz-answer').value);
+  if (isNaN(val)) return;
+
+  quizState.answered = true;
+  const corretto = quizState.event.a;
+  const scarto = Math.abs(val - corretto);
+  const punti = calcolaPunteggio(scarto);
+
+  quizStats.partite++;
+  quizStats.totale += punti;
+  if (punti > quizStats.best) quizStats.best = punti;
+
+  const verdictEl = document.getElementById('result-verdict');
+  const correctEl = document.getElementById('result-correct');
+
+  if (scarto === 0) {
+    verdictEl.textContent = '★ Risposta esatta! Complimenti!';
+    verdictEl.className = 'result-verdict exact';
+    correctEl.textContent = '';
+  } else {
+    const {y, era} = formatAnno(corretto);
+    let commento = '';
+    if (scarto === 1) commento = 'Solo 1 anno di scarto — quasi perfetto!';
+    else if (scarto <= 10) commento = `Scarto di ${scarto} anni — ottimo!`;
+    else if (scarto <= 50) commento = `Scarto di ${scarto} anni — niente male!`;
+    else if (scarto <= 150) commento = `Scarto di ${scarto} anni — nella giusta era!`;
+    else commento = `Scarto di ${scarto} anni — studia di più!`;
+
+    verdictEl.textContent = commento;
+    verdictEl.className = scarto <= 50 ? 'result-verdict close' : 'result-verdict far';
+    correctEl.textContent = `La risposta corretta era: ${y} ${era}`;
+  }
+
+  document.getElementById('score-num').textContent = `${punti} / 5000`;
+  document.getElementById('quiz-result').classList.add('visible');
+
+  setTimeout(() => {
+    document.getElementById('score-bar').style.width = ((punti/5000)*100) + '%';
+  }, 50);
+
+  document.getElementById('stat-partite').textContent = quizStats.partite;
+  document.getElementById('stat-score-tot').textContent = quizStats.totale.toLocaleString('it-IT');
+  document.getElementById('stat-media').textContent = Math.round(quizStats.totale / quizStats.partite);
+  document.getElementById('stat-best').textContent = quizStats.best;
+  playerData.partite = quizStats.partite;
+  playerData.totale = quizStats.totale;
+  playerData.best = quizStats.best;
+  salvaDati();
+  aggiornaProfilo();
+}
+
+// ── PANEL SWITCHING ──
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (id === 'quiz' && !quizState.event) newQuiz();
+}
+</script>
+</body>
+</html>
