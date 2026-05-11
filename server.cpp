@@ -2,188 +2,192 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <cstring>
-#include <unordered_map>
-#include <thread>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <map>
 
-#define PORT 8080
-#define BUFFER_SIZE 8192
+// Winsock headers — must come before any windows.h
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
-// ─────────────────────────────────────────────
-//  Helpers
-// ─────────────────────────────────────────────
+// Link against Ws2_32.lib automatically
+#pragma comment(lib, "Ws2_32.lib")
 
-std::string read_file(const std::string& path) {
-    std::ifstream file(path, std::ios::binary);
-    if (!file.is_open()) return "";
-    std::ostringstream ss;
-    ss << file.rdbuf();
-    return ss.str();
-}
+using namespace std;
 
-std::string content_type(const std::string& path) {
-    static const std::unordered_map<std::string, std::string> types = {
-        {".html", "text/html"},
-        {".css",  "text/css"},
-        {".js",   "application/javascript"},
-        {".json", "application/json"},
-        {".png",  "image/png"},
-        {".jpg",  "image/jpeg"},
-        {".jpeg", "image/jpeg"},
-        {".svg",  "image/svg+xml"},
-        {".ico",  "image/x-icon"},
-        {".txt",  "text/plain"},
-    };
-    auto dot = path.rfind('.');
-    if (dot != std::string::npos) {
-        auto it = types.find(path.substr(dot));
-        if (it != types.end()) return it->second;
+// ── CONFIG ───────────────────────────────────────────────────────────────────
+const int    PORT        = 8080;
+const int    BACKLOG     = 10;
+const string ROOT_DIR    = ".";
+const string DEFAULT_DOC = "index.html";
+
+// ── MIME TYPES ────────────────────────────────────────────────────────────────
+map<string, string> MIME_TYPES = {
+    {".html", "text/html; charset=utf-8"},
+    {".htm",  "text/html; charset=utf-8"},
+    {".css",  "text/css"},
+    {".js",   "application/javascript"},
+    {".json", "application/json"},
+    {".png",  "image/png"},
+    {".jpg",  "image/jpeg"},
+    {".jpeg", "image/jpeg"},
+    {".ico",  "image/x-icon"},
+    {".svg",  "image/svg+xml"},
+    {".txt",  "text/plain"},
+};
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+string getMime(const string& path) {
+    size_t dot = path.rfind('.');
+    if (dot != string::npos) {
+        string ext = path.substr(dot);
+        auto it = MIME_TYPES.find(ext);
+        if (it != MIME_TYPES.end()) return it->second;
     }
     return "application/octet-stream";
 }
 
-struct Request {
-    std::string method;
-    std::string path;
-    std::string body;
-};
-
-Request parse_request(const std::string& raw) {
-    Request req;
-    std::istringstream stream(raw);
-    std::string version;
-    stream >> req.method >> req.path >> version;
-    auto pos = raw.find("\r\n\r\n");
-    if (pos != std::string::npos)
-        req.body = raw.substr(pos + 4);
-    return req;
+string readFile(const string& path, bool& ok) {
+    ifstream f(path, ios::binary);
+    if (!f) { ok = false; return ""; }
+    ok = true;
+    return string(istreambuf_iterator<char>(f), {});
 }
 
-std::string make_response(int status, const std::string& status_text,
-                          const std::string& mime, const std::string& body) {
-    return "HTTP/1.1 " + std::to_string(status) + " " + status_text + "\r\n"
-           "Content-Type: " + mime + "\r\n"
-           "Content-Length: " + std::to_string(body.size()) + "\r\n"
-           "Access-Control-Allow-Origin: *\r\n"
-           "Connection: close\r\n\r\n" + body;
+string buildResponse(int code, const string& status,
+                     const string& contentType,
+                     const string& body) {
+    ostringstream oss;
+    oss << "HTTP/1.1 " << code << " " << status << "\r\n"
+        << "Content-Type: "   << contentType  << "\r\n"
+        << "Content-Length: " << body.size()  << "\r\n"
+        << "Connection: close\r\n"
+        << "\r\n"
+        << body;
+    return oss.str();
 }
 
-// ─────────────────────────────────────────────
-//  REST API  (/api/*)
-// ─────────────────────────────────────────────
+string parsePath(const string& request) {
+    istringstream iss(request);
+    string method, path, version;
+    iss >> method >> path >> version;
 
-std::string handle_api(const Request& req) {
-    // GET /api/status
-    if (req.method == "GET" && req.path == "/api/status") {
-        return make_response(200, "OK", "application/json",
-            R"({"status":"ok","server":"C++ HTTP Server","port":)" +
-            std::to_string(PORT) + "}");
-    }
+    size_t q = path.find('?');
+    if (q != string::npos) path = path.substr(0, q);
 
-    // POST /api/echo
-    if (req.method == "POST" && req.path == "/api/echo") {
-        std::string escaped;
-        for (char c : req.body) {
-            if (c == '\\') escaped += "\\\\";
-            else if (c == '"') escaped += "\\\"";
-            else escaped += c;
-        }
-        return make_response(200, "OK", "application/json",
-            R"({"echo":")" + escaped + R"("})");
-    }
-
-    return make_response(404, "Not Found", "application/json",
-        R"({"error":"API route not found"})");
+    if (path == "/") path = "/" + DEFAULT_DOC;
+    return path;
 }
 
-// ─────────────────────────────────────────────
-//  Static file serving  (public/*)
-// ─────────────────────────────────────────────
+// ── HANDLE ONE CLIENT ─────────────────────────────────────────────────────────
+void handleClient(SOCKET clientSock) {
+    char buf[8192] = {};
+    int received = recv(clientSock, buf, sizeof(buf) - 1, 0);
+    if (received <= 0) { closesocket(clientSock); return; }
 
-std::string handle_static(const Request& req) {
-    std::string url = req.path;
-    // Strip query string
-    auto q = url.find('?');
-    if (q != std::string::npos) url = url.substr(0, q);
+    string request(buf, received);
+    string path = parsePath(request);
+
     // Block directory traversal
-    if (url.find("..") != std::string::npos)
-        return make_response(403, "Forbidden", "text/plain", "Forbidden");
-    // Default to index.html
-    if (url == "/") url = "/index.html";
-
-    std::string filepath = "public" + url;
-    std::string body = read_file(filepath);
-
-    if (body.empty())
-        return make_response(404, "Not Found", "text/html",
-            "<h1>404 – Not Found</h1><p>" + filepath + "</p>");
-
-    return make_response(200, "OK", content_type(filepath), body);
-}
-
-// ─────────────────────────────────────────────
-//  Per-connection handler (runs in its own thread)
-// ─────────────────────────────────────────────
-
-void handle_connection(int socket_fd) {
-    char buffer[BUFFER_SIZE] = {};
-    ssize_t bytes = read(socket_fd, buffer, BUFFER_SIZE - 1);
-    if (bytes > 0) {
-        buffer[bytes] = '\0';
-        Request req = parse_request(buffer);
-        std::cout << "[" << req.method << "] " << req.path << "\n";
-
-        std::string response;
-        if (req.path.rfind("/api/", 0) == 0)
-            response = handle_api(req);
-        else
-            response = handle_static(req);
-
-        send(socket_fd, response.c_str(), response.size(), 0);
+    if (path.find("..") != string::npos) {
+        string resp = buildResponse(403, "Forbidden", "text/plain", "403 Forbidden");
+        send(clientSock, resp.c_str(), (int)resp.size(), 0);
+        closesocket(clientSock);
+        return;
     }
-    close(socket_fd);
+
+    // Convert forward slashes to backslashes for Windows file paths
+    string filePath = ROOT_DIR + path;
+    for (char& c : filePath)
+        if (c == '/') c = '\\';
+
+    bool ok;
+    string body = readFile(filePath, ok);
+
+    string response;
+    if (ok) {
+        response = buildResponse(200, "OK", getMime(path), body);
+        cout << "[200] " << path << "\n";
+    } else {
+        string notFound = "<html><body><h1>404 Not Found</h1><p>" + path + "</p></body></html>";
+        response = buildResponse(404, "Not Found", "text/html; charset=utf-8", notFound);
+        cout << "[404] " << path << "\n";
+    }
+
+    send(clientSock, response.c_str(), (int)response.size(), 0);
+    closesocket(clientSock);
 }
 
-// ─────────────────────────────────────────────
-//  main
-// ─────────────────────────────────────────────
-
+// ── MAIN ──────────────────────────────────────────────────────────────────────
 int main() {
-    int server_fd;
-    struct sockaddr_in address;
+    // 1. Initialise Winsock
+    WSADATA wsaData;
+    int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (result != 0) {
+        cerr << "ERROR: WSAStartup failed (" << result << ")\n";
+        return 1;
+    }
+
+    // 2. Create socket
+    SOCKET serverSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (serverSock == INVALID_SOCKET) {
+        cerr << "ERROR: socket() failed (" << WSAGetLastError() << ")\n";
+        WSACleanup();
+        return 1;
+    }
+
+    // Allow address reuse
     int opt = 1;
-    socklen_t addrlen = sizeof(address);
+    setsockopt(serverSock, SOL_SOCKET, SO_REUSEADDR,
+               reinterpret_cast<const char*>(&opt), sizeof(opt));
 
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        perror("socket"); exit(EXIT_FAILURE);
-    }
-    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
+    // 3. Bind
+    sockaddr_in addr{};
+    addr.sin_family      = AF_INET;
+    addr.sin_port        = htons(PORT);
+    addr.sin_addr.s_addr = INADDR_ANY;
 
-    address.sin_family      = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port        = htons(PORT);
-
-    if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
-        perror("bind"); exit(EXIT_FAILURE);
-    }
-    if (listen(server_fd, 64) < 0) {
-        perror("listen"); exit(EXIT_FAILURE);
+    if (bind(serverSock, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
+        cerr << "ERROR: bind() failed — is port " << PORT << " already in use? ("
+             << WSAGetLastError() << ")\n";
+        closesocket(serverSock);
+        WSACleanup();
+        return 1;
     }
 
-    std::cout << "Server running on http://localhost:" << PORT << "\n";
+    // 4. Listen
+    if (listen(serverSock, BACKLOG) == SOCKET_ERROR) {
+        cerr << "ERROR: listen() failed (" << WSAGetLastError() << ")\n";
+        closesocket(serverSock);
+        WSACleanup();
+        return 1;
+    }
 
+    cout << "╔══════════════════════════════════════╗\n"
+         << "║   C++ Localhost Server (Windows)     ║\n"
+         << "╠══════════════════════════════════════╣\n"
+         << "║  http://localhost:" << PORT << "               ║\n"
+         << "║  Serving files from current dir      ║\n"
+         << "║  Press Ctrl+C to stop                ║\n"
+         << "╚══════════════════════════════════════╝\n\n";
+
+    // 5. Accept loop
     while (true) {
-        int new_socket = accept(server_fd, (struct sockaddr*)&address, &addrlen);
-        if (new_socket < 0) { perror("accept"); continue; }
-        // Each connection gets its own thread — no client blocks another
-        std::thread(handle_connection, new_socket).detach();
+        sockaddr_in clientAddr{};
+        int clientLen = sizeof(clientAddr);
+
+        SOCKET clientSock = accept(serverSock, (sockaddr*)&clientAddr, &clientLen);
+        if (clientSock == INVALID_SOCKET) {
+            cerr << "WARNING: accept() failed (" << WSAGetLastError() << "), retrying...\n";
+            continue;
+        }
+
+        char ipStr[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &clientAddr.sin_addr, ipStr, sizeof(ipStr));
+        cout << "Connection from " << ipStr << ":" << ntohs(clientAddr.sin_port) << "\n";
+
+        handleClient(clientSock);
     }
 
-    close(server_fd);
+    closesocket(serverSock);
+    WSACleanup();
     return 0;
 }
