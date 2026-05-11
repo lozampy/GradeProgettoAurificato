@@ -14,9 +14,9 @@
 using namespace std;
 
 // ── CONFIG ───────────────────────────────────────────────────────────────────
-const int    PORT        = 8080;
-const int    BACKLOG     = 10;
-const string ROOT_DIR    = ".";
+const int    PORT = 8080;
+const int    BACKLOG = 10;
+const string ROOT_DIR = "./public";
 const string DEFAULT_DOC = "index.html";
 
 // ── MIME TYPES ────────────────────────────────────────────────────────────────
@@ -53,12 +53,12 @@ string readFile(const string& path, bool& ok) {
 }
 
 string buildResponse(int code, const string& status,
-                     const string& contentType,
-                     const string& body) {
+    const string& contentType,
+    const string& body) {
     ostringstream oss;
     oss << "HTTP/1.1 " << code << " " << status << "\r\n"
-        << "Content-Type: "   << contentType  << "\r\n"
-        << "Content-Length: " << body.size()  << "\r\n"
+        << "Content-Type: " << contentType << "\r\n"
+        << "Content-Length: " << body.size() << "\r\n"
         << "Connection: close\r\n"
         << "\r\n"
         << body;
@@ -106,7 +106,8 @@ void handleClient(SOCKET clientSock) {
     if (ok) {
         response = buildResponse(200, "OK", getMime(path), body);
         cout << "[200] " << path << "\n";
-    } else {
+    }
+    else {
         string notFound = "<html><body><h1>404 Not Found</h1><p>" + path + "</p></body></html>";
         response = buildResponse(404, "Not Found", "text/html; charset=utf-8", notFound);
         cout << "[404] " << path << "\n";
@@ -137,17 +138,17 @@ int main() {
     // Allow address reuse
     int opt = 1;
     setsockopt(serverSock, SOL_SOCKET, SO_REUSEADDR,
-               reinterpret_cast<const char*>(&opt), sizeof(opt));
+        reinterpret_cast<const char*>(&opt), sizeof(opt));
 
     // 3. Bind
     sockaddr_in addr{};
-    addr.sin_family      = AF_INET;
-    addr.sin_port        = htons(PORT);
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(PORT);
     addr.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(serverSock, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
         cerr << "ERROR: bind() failed — is port " << PORT << " already in use? ("
-             << WSAGetLastError() << ")\n";
+            << WSAGetLastError() << ")\n";
         closesocket(serverSock);
         WSACleanup();
         return 1;
@@ -164,7 +165,7 @@ int main() {
     cout << "╔══════════════════════════════════════╗\n"
          << "║   C++ Localhost Server (Windows)     ║\n"
          << "╠══════════════════════════════════════╣\n"
-         << "║  http://localhost:" << PORT << "               ║\n"
+         << "║  http://localhost:" << PORT << "     ║\n"
          << "║  Serving files from current dir      ║\n"
          << "║  Press Ctrl+C to stop                ║\n"
          << "╚══════════════════════════════════════╝\n\n";
