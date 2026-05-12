@@ -16,7 +16,7 @@ using namespace std;
 // ── CONFIG ───────────────────────────────────────────────────────────────────
 const int    PORT = 8080;
 const int    BACKLOG = 10;
-const string ROOT_DIR = "C:/Users/carlo/Documents/Carlo";
+const string ROOT_DIR = //"C:/Users/carlo/Documents/Carlo";
 const string DEFAULT_DOC = "index.html";
 
 // ── MIME TYPES ────────────────────────────────────────────────────────────────
