@@ -2400,6 +2400,9 @@ function submitQuiz() {
   }
 
   document.getElementById('score-num').textContent = `${punti} / 5000`;
+  if (punti === 5000) {
+    verdictEl.textContent = 'Fuoco';
+  }
   document.getElementById('quiz-result').classList.add('visible');
 
   setTimeout(() => {
