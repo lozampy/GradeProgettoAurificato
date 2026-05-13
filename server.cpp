@@ -14,12 +14,14 @@
 using namespace std;
 
 // ── CONFIG ───────────────────────────────────────────────────────────────────
+//connetti pc carlo (port 8080) al path root_dir nel file default_doc, ci possono essere BACKLOG persone connesse allo stesso tempo (la BACKLOG+1 persona non si può connettere) 
 const int    PORT = 8080;
 const int    BACKLOG = 10;
 const string ROOT_DIR = //"C:/Users/carlo/Documents/Carlo";
 const string DEFAULT_DOC = "index.html";
 
 // ── MIME TYPES ────────────────────────────────────────────────────────────────
+// tutti i tipi di file che possono essere caricati sul sito
 map<string, string> MIME_TYPES = {
     {".html", "text/html; charset=utf-8"},
     {".htm",  "text/html; charset=utf-8"},
@@ -35,12 +37,13 @@ map<string, string> MIME_TYPES = {
 };
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
+// string& path significa classe stringa simil-python
 string getMime(const string& path) {
     size_t dot = path.rfind('.');
-    if (dot != string::npos) {
-        string ext = path.substr(dot);
-        auto it = MIME_TYPES.find(ext);
-        if (it != MIME_TYPES.end()) return it->second;
+    if (dot != string::npos) {                                    //string::npos indica che la posizione non è trovata, quindi se non esiste un punto nel file path in linea 42
+        string ext = path.substr(dot);                            //trova l'estensione del file (.jpg o simili) controllando tutto cio che sta dopo l'ultimo punto del file di path (line 42)
+        auto it = MIME_TYPES.find(ext);                           //la variabile it contiene le informazioni che definiscono un file .ext, cioè è in grado di distinguere un .ext
+        if (it != MIME_TYPES.end()) return it->second;            //
     }
     return "application/octet-stream";
 }
