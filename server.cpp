@@ -13,14 +13,14 @@
 
 using namespace std;
 
-// ── CONFIG ───────────────────────────────────────────────────────────────────
+// -- CONFIG -------------------------------------------------------------------
 //connetti pc carlo (port 8080) al path root_dir nel file default_doc, ci possono essere BACKLOG persone connesse allo stesso tempo (la BACKLOG+1 persona non si può connettere) 
 const int    PORT = 8080;
 const int    BACKLOG = 10;
-const string ROOT_DIR = //"C:/Users/carlo/Documents/Carlo";
+const string ROOT_DIR = "./public/";
 const string DEFAULT_DOC = "index.html";
 
-// ── MIME TYPES ────────────────────────────────────────────────────────────────
+// -- MIME TYPES ----------------------------------------------------------------
 // tutti i tipi di file che possono essere caricati sul sito
 map<string, string> MIME_TYPES = {
     {".html", "text/html; charset=utf-8"},
@@ -36,7 +36,7 @@ map<string, string> MIME_TYPES = {
     {".txt",  "text/plain"},
 };
 
-// ── HELPERS ───────────────────────────────────────────────────────────────────
+// -- HELPERS -------------------------------------------------------------------
 // string& path significa classe stringa simil-python
 string getMime(const string& path) {
     size_t dot = path.rfind('.');
@@ -80,7 +80,7 @@ string parsePath(const string& request) {
     return path;
 }
 
-// ── HANDLE ONE CLIENT ─────────────────────────────────────────────────────────
+// -- HANDLE ONE CLIENT ---------------------------------------------------------
 void handleClient(SOCKET clientSock) {
     char buf[8192] = {};
     int received = recv(clientSock, buf, sizeof(buf) - 1, 0);
@@ -120,7 +120,7 @@ void handleClient(SOCKET clientSock) {
     closesocket(clientSock);
 }
 
-// ── MAIN ──────────────────────────────────────────────────────────────────────
+// -- MAIN ----------------------------------------------------------------------
 int main() {
     // 1. Initialise Winsock
     WSADATA wsaData;
@@ -165,13 +165,13 @@ int main() {
         return 1;
     }
 
-    cout << "╔══════════════════════════════════════╗\n"
-         << "║   C++ Localhost Server (Windows)     ║\n"
-         << "╠══════════════════════════════════════╣\n"
-         << "║  http://localhost:" << PORT << "     ║\n"
-         << "║  Serving files from current dir      ║\n"
-         << "║  Press Ctrl+C to stop                ║\n"
-         << "╚══════════════════════════════════════╝\n\n";
+    cout << "+--------------------------------------+\n"
+         << "¦   C++ Localhost Server (Windows)     ¦\n"
+         << "¦--------------------------------------¦\n"
+         << "¦  http://localhost:" << PORT << "     ¦\n"
+         << "¦  Serving files from current dir      ¦\n"
+         << "¦  Press Ctrl+C to stop                ¦\n"
+         << "+--------------------------------------+\n\n";
 
     // 5. Accept loop
     while (true) {
